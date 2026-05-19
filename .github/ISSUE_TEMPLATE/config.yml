@@ -1,0 +1,16 @@
+# 이슈 템플릿 설정
+# 같은 디렉토리의 .md 파일이 New Issue 시 선택 목록에 자동으로 표시됩니다.
+#
+# 사용 중인 템플릿:
+#   - feat_template.md   (기능 개발)
+#   - fix_template.md    (버그 수정)
+#   - docs_template.md   (문서 개선)
+#   - refactor_template.md (리팩터링)
+#   - chore_template.md  (기타 작업)
+
+blank_issues_enabled: false
+
+contact_links:
+  - name: 📝 커밋 컨벤션
+    url: https://github.com/GDG-on-Campus-KNU/winter-sprint-5.5st-team1-be/blob/main/.github/commit_convention.md
+    about: 커밋 메시지 작성 규칙을 확인하세요
