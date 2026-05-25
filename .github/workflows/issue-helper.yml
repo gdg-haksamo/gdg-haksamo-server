@@ -6,6 +6,9 @@ on:
   issues:
     types: [opened, labeled]
 
+permissions:
+  issues: write
+
 jobs:
   on-opened:
     if: github.event_name == 'issues' && github.event.action == 'opened'
@@ -55,9 +58,11 @@ jobs:
       - name: Get reminder comment id
         id: get_comment_id
         if: steps.find_reminder.outputs.comments != '' && steps.find_reminder.outputs.comments != '[]'
+        env:
+          COMMENTS_JSON: ${{ steps.find_reminder.outputs.comments }}
         run: |
-          comment_id=$(echo '${{ steps.find_reminder.outputs.comments }}' | jq -r '.[0].id')
-          echo "comment_id=$comment_id" >> $GITHUB_OUTPUT
+          comment_id=$(printf '%s' "$COMMENTS_JSON" | jq -r '.[0].id')
+          echo "comment_id=$comment_id" >> "$GITHUB_OUTPUT"
 
       - name: Delete reminder comment
         if: steps.get_comment_id.outputs.comment_id != ''
