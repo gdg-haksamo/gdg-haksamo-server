@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Remind to add label when none
-        if: github.event.issue.labels == fromJSON('[]')
+        if: toJSON(github.event.issue.labels) == '[]'
         uses: actions-cool/issues-helper@v3
         with:
           actions: 'create-comment'
@@ -28,7 +28,7 @@ jobs:
           emoji: 'eyes'
 
       - name: Create welcome comment (had labels from start)
-        if: github.event.issue.labels != fromJSON('[]')
+        if: toJSON(github.event.issue.labels) != '[]'
         uses: actions-cool/issues-helper@v3
         with:
           actions: 'create-comment'
