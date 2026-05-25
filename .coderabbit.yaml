@@ -37,19 +37,19 @@ reviews:
     - SQL injection, XSS 등 보안 취약점을 체크해주세요
     - @AuthenticationPrincipal로 받은 사용자 ID는 검증 없이 신뢰 가능하나, 그 외 요청 파라미터로 들어오는 ID는 권한 검증이 필요합니다
 
-path_filters:
-  excluded:
-    - "*.txt"
-    - "**/build/**"
-    - "**/target/**"
-    - "**/node_modules/**"
-    - "**/dist/**"
-    - "**/*.min.js"
-    - "**/generated/**"
-    - "**/.gradle/**"
-    - "**/bin/**"
-    - "docs/**/*.webp"
-    - "docs/**/*.png"
+  # 리뷰 제외 경로 (CodeRabbit 스키마 상 reviews 아래로 이동)
+  path_filters:
+    - "!*.txt"
+    - "!**/build/**"
+    - "!**/target/**"
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/*.min.js"
+    - "!**/generated/**"
+    - "!**/.gradle/**"
+    - "!**/bin/**"
+    - "!docs/**/*.webp"
+    - "!docs/**/*.png"
 
 chat:
   auto_reply: true
