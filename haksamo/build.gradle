@@ -28,6 +28,10 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
+	// JAXB (Hibernate 6.6+가 transitive로 가져오지 않음 — entity 매핑 prepare 단계에 필요)
+	implementation 'jakarta.xml.bind:jakarta.xml.bind-api'
+	runtimeOnly 'org.glassfish.jaxb:jaxb-runtime'
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'

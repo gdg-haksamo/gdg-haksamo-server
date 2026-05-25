@@ -1,0 +1,36 @@
+name: PR Build Check
+
+# dev 브랜치로의 PR(생성/업데이트/재오픈) 시 ./gradlew build 자동 실행
+# 빌드 실패하면 PR 머지 전에 빨리 알아챌 수 있도록
+
+on:
+  pull_request:
+    branches:
+      - dev
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Grant execute permission for Gradle
+        run: chmod +x ./haksamo/gradlew
+
+      - name: Build with Gradle (clean build)
+        working-directory: ./haksamo
+        run: ./gradlew clean build --no-daemon
