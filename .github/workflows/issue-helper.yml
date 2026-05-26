@@ -1,0 +1,88 @@
+# 이슈 봇: 라벨 없이 이슈 생성되면 안내 댓글 → 라벨 붙으면 안내 댓글 삭제 + 환영 댓글
+# 참고: https://github.com/marketplace/actions/issues-helper
+name: Issue Helper
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  issues: write
+
+jobs:
+  on-opened:
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remind to add label when none
+        if: toJSON(github.event.issue.labels) == '[]'
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'create-comment'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ⚠️ 이 이슈에는 아직 **라벨이 없습니다.**
+            이슈 유형에 맞는 라벨을 붙여 주세요: `feat` / `fix` / `docs` / `refactor` / `chore`
+            <!-- reminder-no-label -->
+          emoji: 'eyes'
+
+      - name: Create welcome comment (had labels from start)
+        if: toJSON(github.event.issue.labels) != '[]'
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'create-comment'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            안녕하세요 @${{ github.event.issue.user.login }}님, 이슈를 등록해 주셔서 감사합니다. 🙌
+
+            - **커밋·PR**: [커밋 컨벤션](https://github.com/gdg-haksamo/gdg-haksamo-server/blob/dev/.github/commit_convention.md)을 참고해 주세요.
+
+            감사합니다.
+          emoji: '+1'
+
+  on-labeled:
+    if: github.event_name == 'issues' && github.event.action == 'labeled'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find reminder comment
+        id: find_reminder
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'find-comments'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number }}
+          body-includes: 'reminder-no-label'
+
+      - name: Get reminder comment id
+        id: get_comment_id
+        if: steps.find_reminder.outputs.comments != '' && steps.find_reminder.outputs.comments != '[]'
+        env:
+          COMMENTS_JSON: ${{ steps.find_reminder.outputs.comments }}
+        run: |
+          comment_id=$(printf '%s' "$COMMENTS_JSON" | jq -r '.[0].id')
+          echo "comment_id=$comment_id" >> "$GITHUB_OUTPUT"
+
+      - name: Delete reminder comment
+        if: steps.get_comment_id.outputs.comment_id != ''
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'delete-comment'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment-id: ${{ steps.get_comment_id.outputs.comment_id }}
+
+      - name: Create welcome comment after labeling
+        if: steps.get_comment_id.outputs.comment_id != ''
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'create-comment'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            안녕하세요 @${{ github.event.issue.user.login }}님, 이슈를 등록해 주셔서 감사합니다. 🙌
+
+            - **커밋·PR**: [커밋 컨벤션](https://github.com/gdg-haksamo/gdg-haksamo-server/blob/dev/.github/commit_convention.md)을 참고해 주세요.
+
+            감사합니다.
+          emoji: '+1'
