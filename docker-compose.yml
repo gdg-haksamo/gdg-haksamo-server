@@ -25,7 +25,10 @@ services:
   # EC2 배포용 앱 서비스
   # - GHCR에서 최신 이미지를 pull해서 실행
   # - DB_HOST=db → Docker 내부 네트워크에서 db 서비스 이름으로 접근
+  # - profiles: [prod] → 로컬에서 docker compose up 할 때는 실행되지 않음
+  #   EC2 CD 워크플로에서는 docker compose --profile prod up -d 로 실행
   app:
+    profiles: [prod]
     image: ghcr.io/gdg-haksamo/gdg-haksamo-server:latest
     container_name: haksamo-app
     restart: unless-stopped

@@ -111,8 +111,9 @@ jobs:
             docker pull ghcr.io/${{ github.repository }}:latest
 
             # 기존 컨테이너 중지 후 새 이미지로 재시작
-            docker compose down
-            docker compose up -d
+            # --profile prod: app 서비스 포함 (로컬에서는 db만 뜨도록 분리)
+            docker compose --profile prod down
+            docker compose --profile prod up -d
 
             # 사용하지 않는 오래된 이미지 정리 (디스크 절약)
             docker image prune -f
