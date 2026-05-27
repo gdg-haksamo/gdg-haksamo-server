@@ -86,8 +86,8 @@ public class MenuCrawlerService {
                     menuEntity.setSpecial(isFirst && isSpecialRestaurant);
                     isFirst = false;
 
-                    String priceStr = menu.select("p").get(1).text();
-                    int price = Integer.parseInt(priceStr.replace("￦ ", "").replace(",", ""));
+                    String priceStr = menu.select("p").get(1).text().replaceAll("[^0-9]", "");
+                    int price = Integer.parseInt(priceStr);
                     menuEntity.setPrice(price);
                     menuRepository.save(menuEntity);
                 } else if (menu.text().contains("0원의 저녁밥")) {
@@ -98,6 +98,7 @@ public class MenuCrawlerService {
                     menuEntity.setRestaurant(restaurantName);
                     menuEntity.setTime(mealTime);
                     menuEntity.setWeek(days[i]);
+                    menuEntity.setSpecial(true);
                     menuEntity.setPrice(0);
                     menuRepository.save(menuEntity);
                 }
