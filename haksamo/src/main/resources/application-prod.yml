@@ -6,7 +6,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: create # TODO: 첫 배포 후 validate로 복원
+      ddl-auto: update # 개발 완료 후 실 서비스 오픈 시점에 validate로 전환
     show-sql: false
     properties:
       hibernate:
