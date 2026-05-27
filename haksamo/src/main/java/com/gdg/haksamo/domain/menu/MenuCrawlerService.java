@@ -19,15 +19,20 @@ public class MenuCrawlerService {
 
     @Scheduled(cron = "0 0 1 * * MON")
     void crawl() {
-        try {
-            restaurant("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=35", "정보센터");
-            restaurant("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=36", "복지관");
-            restaurant("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=37", "첨성");
-            restaurant("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=46", "글플");
-            restaurant("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=85", "공식당 교직원");
-            restaurant("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=86", "공식당 학생");
-        } catch (IOException e) {
-            e.printStackTrace();
+        String[][] targets = {
+                {"https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=35", "정보센터"},
+                {"https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=36", "복지관"},
+                {"https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=37", "첨성"},
+                {"https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=46", "글플"},
+                {"https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=85", "공식당 교직원"},
+                {"https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=86", "공식당 학생"}
+        };
+        for (String[] target : targets) {
+            try {
+                restaurant(target[0], target[1]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -37,18 +42,18 @@ public class MenuCrawlerService {
 
         for (Element di : div) {
             if (di.select("p.title").text().equals("조식")) {
-                time(di.select("td"), restaurantName, "조식");
+                time(di.select("td"), restaurantName, MealTime.조식);
             }
             if (di.select("p.title").text().equals("중식")) {
-                time(di.select("td"), restaurantName, "중식");
+                time(di.select("td"), restaurantName, MealTime.중식);
             }
             if (di.select("p.title").text().equals("석식")) {
-                time(di.select("td"), restaurantName, "석식");
+                time(di.select("td"), restaurantName, MealTime.석식);
             }
         }
     }
 
-    void time(Elements tdList, String restaurantName, String mealTime) {
+    void time(Elements tdList, String restaurantName, MealTime mealTime) {
         Element[] week = new Element[5];
         String[] days = {"월요일", "화요일", "수요일", "목요일", "금요일"};
 
