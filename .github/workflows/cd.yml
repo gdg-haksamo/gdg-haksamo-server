@@ -22,7 +22,6 @@ on:
 
 permissions:
   contents: read
-  packages: write  # GHCR(GitHub Container Registry) 이미지 push 권한
 
 jobs:
   # ─────────────────────────────────────────────
@@ -31,6 +30,9 @@ jobs:
   build-and-push:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write  # GHCR 이미지 push 권한 (이 job에만 필요)
 
     steps:
       - name: Checkout repository
@@ -86,10 +88,15 @@ jobs:
       # SSH로 EC2 접속 → .env 생성 → 이미지 pull → 재시작
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
+        env:
+          # github.actor/repository를 env 변수로 분리 (쉘 command injection 방지)
+          GHCR_ACTOR: ${{ github.actor }}
+          GHCR_REPOSITORY: ${{ github.repository }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: GHCR_ACTOR,GHCR_REPOSITORY
           script: |
             set -e
             cd ~/haksamo
@@ -105,10 +112,10 @@ jobs:
 
             # GHCR 로그인 (이미지 pull 권한)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io \
-              -u ${{ github.actor }} --password-stdin
+              -u "$GHCR_ACTOR" --password-stdin
 
             # 최신 이미지 다운로드
-            docker pull ghcr.io/${{ github.repository }}:latest
+            docker pull "ghcr.io/$GHCR_REPOSITORY:latest"
 
             # 기존 컨테이너 중지 후 새 이미지로 재시작
             # --profile prod: app 서비스 포함 (로컬에서는 db만 뜨도록 분리)
