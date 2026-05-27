@@ -68,6 +68,9 @@ jobs:
     name: Deploy to EC2
     runs-on: ubuntu-latest
     needs: build-and-push  # Job 1이 성공해야 실행
+    permissions:
+      contents: read
+      packages: read  # GHCR 이미지 pull 권한
 
     steps:
       - name: Checkout repository
