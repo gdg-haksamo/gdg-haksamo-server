@@ -24,7 +24,7 @@ jobs:
               issue_number: context.issue.number,
               body: `⚠️ 이 이슈에는 아직 **라벨이 없습니다.**\n이슈 유형에 맞는 라벨을 붙여 주세요: \`feat\` / \`fix\` / \`docs\` / \`refactor\` / \`chore\`\n<!-- reminder-no-label -->`
             });
-            await github.rest.issues.createReaction({
+            await github.rest.reactions.createForIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
@@ -42,7 +42,7 @@ jobs:
               issue_number: context.issue.number,
               body: `안녕하세요 @${{ github.event.issue.user.login }}님, 이슈를 등록해 주셔서 감사합니다. 🙌\n\n- **커밋·PR**: [커밋 컨벤션](https://github.com/gdg-haksamo/gdg-haksamo-server/blob/dev/.github/commit_convention.md)을 참고해 주세요.\n\n감사합니다.`
             });
-            await github.rest.issues.createReaction({
+            await github.rest.reactions.createForIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
@@ -78,7 +78,7 @@ jobs:
               issue_number: context.issue.number,
               body: `안녕하세요 @${{ github.event.issue.user.login }}님, 이슈를 등록해 주셔서 감사합니다. 🙌\n\n- **커밋·PR**: [커밋 컨벤션](https://github.com/gdg-haksamo/gdg-haksamo-server/blob/dev/.github/commit_convention.md)을 참고해 주세요.\n\n감사합니다.`
             });
-            await github.rest.issues.createReaction({
+            await github.rest.reactions.createForIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
