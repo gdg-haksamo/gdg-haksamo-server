@@ -22,5 +22,26 @@ services:
       timeout: 5s
       retries: 10
 
+  # EC2 배포용 앱 서비스
+  # - GHCR에서 최신 이미지를 pull해서 실행
+  # - DB_HOST=db → Docker 내부 네트워크에서 db 서비스 이름으로 접근
+  app:
+    image: ghcr.io/gdg-haksamo/gdg-haksamo-server:latest
+    container_name: haksamo-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8080:8080"
+
 volumes:
   haksamo-mysql-data:
