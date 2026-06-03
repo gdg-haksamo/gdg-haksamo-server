@@ -15,6 +15,23 @@ permissions:
 jobs:
   Build:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: haksamo
+          MYSQL_USER: haksamo
+          MYSQL_PASSWORD: haksamo
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,4 +50,11 @@ jobs:
 
       - name: Build with Gradle (clean build)
         working-directory: ./haksamo
+        env:
+          SPRING_PROFILES_ACTIVE: dev
+          DB_HOST: 127.0.0.1
+          DB_NAME: haksamo
+          DB_USERNAME: haksamo
+          DB_PASSWORD: haksamo
+          JWT_SECRET: test-secret-for-ci-environment-minimum-32chars
         run: ./gradlew clean build --no-daemon
