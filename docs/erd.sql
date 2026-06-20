@@ -4,6 +4,10 @@
 --   - User: 알림 세분화(4종), favorite_restaurant 관계 분리
 --   - FavoriteRestaurant 신규 (자주 가는 학식당 N개)
 --   - ReviewHelpful 신규 (리뷰 도움됐어요)
+-- 작성: 김채윤 / 최종수정: 2026-06-21
+-- v1.3: Menu/MenuSchedule 분리 설계 반영
+--   - MenuSchedule 추가 (오늘 메뉴 리스트 관리)
+--   - Menu 수정 (설명 추가, 품절->MenuSchedule, 특식 삭제)
 
 CREATE TABLE `User` (
     `user_id`                        BIGINT         NOT NULL AUTO_INCREMENT,
@@ -50,16 +54,25 @@ CREATE TABLE `Menu` (
     `price`         INT             NULL,
     `category`      VARCHAR(255)    NULL,
     `image_url`     VARCHAR(255)    NULL,
-    `date`          DATE            NOT NULL,   -- DATE 타입 (시간 불필요)
-    `time`          ENUM('BREAKFAST', 'LUNCH', 'DINNER') NOT NULL,
-    `is_special`    BOOLEAN         NOT NULL DEFAULT FALSE,
-    `is_sold_out`   BOOLEAN         NOT NULL DEFAULT FALSE,  -- 품절 처리
+    `description`   VARCHAR(255)    NULL,
     `calories`      INT             NULL,
     `protein`       INT             NULL,
     `carb`          INT             NULL,
     `fat`           INT             NULL,
     PRIMARY KEY (`menu_id`),
+    UNIQUE KEY `uq_menu_identity` (`restaurant_id`, `name`),
     CONSTRAINT `fk_menu_restaurant` FOREIGN KEY (`restaurant_id`) REFERENCES `Restaurant` (`restaurant_id`)
+);
+
+CREATE TABLE `MenuSchedule` (
+    `schedule_id`   BIGINT   NOT NULL AUTO_INCREMENT,
+    `menu_id`       BIGINT   NOT NULL,
+    `date`          DATE     NOT NULL,
+    `time`          ENUM('BREAKFAST', 'LUNCH', 'DINNER')  NOT NULL,
+    `is_sold_out`   BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (`schedule_id`),
+    UNIQUE KEY `uq_sched` (`menu_id`, `date`, `time`),
+    CONSTRAINT `fk_sched_menu`       FOREIGN KEY (`menu_id`)       REFERENCES `Menu` (`menu_id`)
 );
 
 CREATE TABLE `Review` (
