@@ -23,7 +23,7 @@
 
 ---
 
-## 2. `Menu.time` — VARCHAR 대신 ENUM
+## 2. `MenuSchedule.time` — VARCHAR 대신 ENUM
 
 **결정:** `ENUM('BREAKFAST', 'LUNCH', 'DINNER')`
 
@@ -40,7 +40,7 @@
 
 ---
 
-## 3. `Menu.date` — DATETIME 대신 DATE
+## 3. `MenuSchedule.date` — DATETIME 대신 DATE
 
 **결정:** `DATE` 타입
 
@@ -51,9 +51,9 @@
 
 ---
 
-## 4. `Menu.is_sold_out` — Menu 테이블 직접 컬럼
+## 4. `MenuSchedule.is_sold_out` — 날짜별 품절 상태
 
-**결정:** `Menu`에 `is_sold_out BOOLEAN` 컬럼 추가
+**결정:** `MenuSchedule`에 `is_sold_out BOOLEAN` 컬럼 추가
 
 **이유:**
 - 품절 상태는 메뉴의 속성이므로 별도 테이블 분리 불필요
@@ -93,6 +93,8 @@
 - Gemini가 복수의 메뉴를 추천하는 구조를 표현하려면 1:N이 필요
 - 추천 이유(`reason`)는 1회 생성되는 메타데이터이므로 헤더에 보관
 - `(user_id, date)` UNIQUE KEY로 하루 1행만 유지
+- 추천 후보는 MenuSchedule에서 조회
+- 추천 결과는 Menu 기준으로 저장
 
 **새로고침 정책 (UI 새로고침 버튼 대응):**
 - 자동 호출: 하루 첫 요청 시 새 row 생성 (기존 캐시 hit이면 그대로 반환)
@@ -250,3 +252,25 @@
 - 기획서(학사모.png) 공지·이벤트 페이지의 인스타 카드에 X 표시
 - 외부 SNS API 연동은 4주 MVP 범위 초과
 - 운영자가 직접 `Event` 테이블에 등록한 콘텐츠만 노출
+
+---
+
+## 17. Menu + MenuSchedule 분리
+
+**결정:** Menu와 MenuSchedule 엔티티 분리를 통해 역할 분리
+
+**이유:**
+- Menu = 영구 메뉴 카탈로그
+- MenuSchedule = 주간 메뉴 편성표
+- 리뷰 누적을 위해 분리
+- 스케줄 초기화 시 Review 보존
+
+---
+
+## 18. Menu 식별자 (restaurant_id, name)
+
+**결정:** UNIQUE KEY (restaurant_id, name) 식별자 지정
+
+**이유:**
+- 같은 식당의 같은 메뉴는 동일 메뉴로 취급
+- 식당, 메뉴 외 가격 등 달라지는 경우는 upsert 시켜 덮어씌움
