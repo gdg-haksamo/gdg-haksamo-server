@@ -1,5 +1,9 @@
-package com.gdg.haksamo.domain.menu;
+package com.gdg.haksamo.domain.menu.crawler;
 
+import com.gdg.haksamo.domain.menu.crawler.parser.InformationCenterParser;
+import com.gdg.haksamo.domain.menu.entity.Menu;
+import com.gdg.haksamo.domain.menu.repository.MenuRepository;
+import jakarta.annotation.PostConstruct;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -8,31 +12,34 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class MenuCrawlerService {
     private final MenuRepository menuRepository;
+    private final InformationCenterParser informationCenterParser;
 
-    public MenuCrawlerService(MenuRepository menuRepository) {
+    public MenuCrawlerService(MenuRepository menuRepository, InformationCenterParser informationCenterParser) {
         this.menuRepository = menuRepository;
+        this.informationCenterParser = informationCenterParser;
     }
 
-    @Scheduled(cron = "0 0 1 * * MON")
+    @PostConstruct      //실행하면 바로 크롤링 (테스트용)
+    //@Scheduled(cron = "0 0 1 * * MON")
     void crawl() {
         try {
-            restaurant("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=35", "정보센터");
-            restaurant("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=36", "복지관");
-            restaurant("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=37", "첨성");
-            restaurant("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=46", "글플");
-            restaurant("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=85", "공식당 교직원");
-            restaurant("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=86", "공식당 학생");
+            Document doc = Jsoup.connect("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=35").get();
+            List<ParsedMenu> menu = informationCenterParser.parse(doc);
+            menu.forEach(System.out::println);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
+/*
     void restaurant(String url, String restaurantName) throws IOException {
         Document doc = Jsoup.connect(url).get();
+
         Elements div = doc.select("div.week_table");
 
         for (Element di : div) {
@@ -75,11 +82,6 @@ public class MenuCrawlerService {
                     menuEntity.setName(name);
 
                     menuEntity.setRestaurant(restaurantName);
-                    menuEntity.setTime(mealTime);
-                    menuEntity.setWeek(days[i]);
-
-                    menuEntity.setSpecial(isFirst && isSpecialRestaurant);
-                    isFirst = false;
 
                     String priceStr = menu.select("p").get(1).text();
                     int price = Integer.parseInt(priceStr.replace("￦ ", "").replace(",", ""));
@@ -91,12 +93,10 @@ public class MenuCrawlerService {
                     menuEntity.setName(name);
 
                     menuEntity.setRestaurant(restaurantName);
-                    menuEntity.setTime(mealTime);
-                    menuEntity.setWeek(days[i]);
                     menuEntity.setPrice(0);
                     menuRepository.save(menuEntity);
                 }
             }
         }
-    }
+    }*/
 }
