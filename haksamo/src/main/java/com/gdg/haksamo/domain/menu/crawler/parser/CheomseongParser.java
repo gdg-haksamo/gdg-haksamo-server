@@ -11,7 +11,7 @@ import java.util.List;
 
 @Component
 
-public class InformationCenterParser implements MenuParser{
+public class CheomseongParser implements MenuParser{
 
     @Override
     public List<ParsedMenu> parse(Document doc) {
@@ -47,17 +47,19 @@ public class InformationCenterParser implements MenuParser{
 
                 String name = menu.ownText() + " " + pTags.get(0).text();
                 name = name.replaceAll("\\s*★\\s*", "");
-                name = name.replaceAll("\\s*\\*2000원의 저녁밥\\*\\s*", "");
+                name = name.replaceAll("\\s*천원의 아침밥\\s*", "");
                 name = name.replaceAll("\\s*\\(.*?\\)", "");
                 name = name.trim();
 
                 String operatingTime = null;
-                if(name.equals("라면") || name.equals("우동") || name.equals("우동밥")) {
-                    operatingTime = "13:00~17:00";
+                if(name.equals("라면")) {
+                    operatingTime = "9:00~11:00, 13:00~15:00";
+                } else if(menu.text().contains("돈가스")) {
+                    operatingTime = "11:00~15:00";
+                } else if(mealTime == MealTime.BREAKFAST) {
+                    operatingTime = "8:00~9:00";
                 } else if(mealTime == MealTime.LUNCH) {
                     operatingTime = "11:00~13:30";
-                } else if(mealTime == MealTime.DINNER) {
-                    operatingTime = "17:00~19:00";
                 }
 
                 String priceStr = pTags.get(1).text();

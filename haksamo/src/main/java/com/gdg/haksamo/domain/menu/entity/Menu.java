@@ -1,16 +1,15 @@
 package com.gdg.haksamo.domain.menu.entity;
 
+import com.gdg.haksamo.domain.restaurant.Restaurant;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Menu {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +19,7 @@ public class Menu {
     private String restaurant;
     private String name;
     private int price;
+    private String operatingTime;
 
     private String category;
     private String imageUrl;
