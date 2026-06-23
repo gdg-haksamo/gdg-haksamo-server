@@ -243,8 +243,8 @@
 > **변경 이력:** 초기 기획(학사모.png)에서는 회원가입 키워드 단계에 X 표시였으나, 최종 Figma 디자인(`signin-1/2/3`)에서 3단계 가입으로 확정되어 **도입하는 것으로 변경**.
 
 **회원가입 3단계 (Figma 기준):**
-1. **기본 정보** — 이메일(@knu.ac.kr), 비밀번호, 닉네임(2~8자)
-2. **식당 선택** — 자주 가는 식당 복수 선택(`FavoriteRestaurant`) + 학과(`User.department`) 입력
+1. **이메일 인증** — `POST /api/auth/email/send-code` / `verify-code` (도메인 제한 없음, 소유 검증). 통과한 이메일만 가입 가능
+2. **기본 정보 + 식당 선택** — 비밀번호, 닉네임(2~8자), 학과(`User.department`) + 자주 가는 식당 복수 선택(`FavoriteRestaurant`)
 3. **키워드 선택** — 선호 음식 키워드 복수 선택(`Preference`, type=LIKED)
 
 **이유:**
@@ -311,7 +311,7 @@
 - 크롤 본체(편성 저장)와 **분리/비동기**로 처리 → Gemini가 느려도 `MenuSchedule` 저장은 즉시 완료
 
 **흐름:**
-```
+```text
 크롤 스케줄러 → MenuSchedule 저장(즉시) 
             → (비동기) description/영양/image_url == NULL 인 Menu만 Gemini 호출하여 채움
 ```
@@ -321,7 +321,7 @@
 ## 20. 메뉴 크롤러 구조 — 식당별 파서 분리 + 공용 저장 1곳
 
 **결정:** 파싱은 식당별 파서로 분리하되, 저장(upsert)은 공용 1곳으로 통일한다.
-```
+```text
 [식당별 파서 N개]  parse(Document) → List<ParsedMenu>     // 식당별 구조·시간 차이는 여기서 흡수
    ParsedMenu = { name(정제), time, price, dayIndex }
         ▼

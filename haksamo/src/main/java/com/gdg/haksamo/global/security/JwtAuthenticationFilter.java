@@ -30,11 +30,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String token = resolveToken(request);
         if (token != null && jwtTokenProvider.validate(token)) {
-            Long userId = jwtTokenProvider.getUserId(token);
             String role = jwtTokenProvider.getRole(token);
-            var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
-            var authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // Access Token만 role 클레임을 가진다. Refresh Token(role 없음)을 Bearer로 보내
+            // 인증을 통과시키는 우회를 차단한다.
+            if (role != null) {
+                Long userId = jwtTokenProvider.getUserId(token);
+                var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+                var authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
         filterChain.doFilter(request, response);
     }

@@ -5,6 +5,7 @@ import com.gdg.haksamo.domain.user.dto.AdminUserResponse;
 import com.gdg.haksamo.domain.user.dto.CreateRestaurantAdminRequest;
 import com.gdg.haksamo.domain.user.dto.ResetPasswordRequest;
 import com.gdg.haksamo.domain.user.dto.UpdateUserRoleRequest;
+import com.gdg.haksamo.domain.restaurant.RestaurantRepository;
 import com.gdg.haksamo.domain.user.entity.Role;
 import com.gdg.haksamo.domain.user.entity.User;
 import com.gdg.haksamo.domain.user.repository.UserRepository;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminUserService {
 
     private final UserRepository userRepository;
+    private final RestaurantRepository restaurantRepository;
     private final PasswordEncoder passwordEncoder;
 
     /** 전체/권한별 계정 목록 조회. role이 null이면 전체. */
@@ -48,8 +50,7 @@ public class AdminUserService {
         if (userRepository.existsByEmail(request.email())) {
             throw new BusinessException(ErrorCode.EMAIL_DUPLICATED);
         }
-        // NOTE: 식당 존재 여부 검증은 Restaurant 도메인(채윤님) 머지 후 RestaurantRepository로 추가한다.
-        //       (현재 managedRestaurantId는 FK 없는 Long 컬럼 — 조기 결합 회피)
+        validateRestaurantExists(request.restaurantId());
         User saved = userRepository.save(User.createRestaurantAdmin(
                 request.email(),
                 passwordEncoder.encode(request.password()),
@@ -64,13 +65,23 @@ public class AdminUserService {
         if (actorUserId.equals(targetUserId)) {
             throw new BusinessException(ErrorCode.ADMIN_CANNOT_MODIFY_SELF);
         }
-        if (request.role() == Role.RESTAURANT_ADMIN && request.managedRestaurantId() == null) {
-            throw new BusinessException(ErrorCode.ADMIN_RESTAURANT_REQUIRED);
+        if (request.role() == Role.RESTAURANT_ADMIN) {
+            if (request.managedRestaurantId() == null) {
+                throw new BusinessException(ErrorCode.ADMIN_RESTAURANT_REQUIRED);
+            }
+            validateRestaurantExists(request.managedRestaurantId());
         }
         User user = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         user.changeRole(request.role(), request.managedRestaurantId());
         return AdminUserResponse.from(user);
+    }
+
+    /** 담당 식당이 실제 존재하는지 검증 (무효 참조 저장 방지). */
+    private void validateRestaurantExists(Long restaurantId) {
+        if (!restaurantRepository.existsById(restaurantId)) {
+            throw new BusinessException(ErrorCode.RESTAURANT_NOT_FOUND);
+        }
     }
 
     /** 비밀번호 재설정 (운영자 분실 대응 등). */

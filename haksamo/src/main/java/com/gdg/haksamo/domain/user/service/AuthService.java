@@ -90,9 +90,20 @@ public class AuthService {
         return issueTokens(userId, user.getRole().name());
     }
 
+    /**
+     * 로그아웃 — 서버측 Refresh Token 폐기.
+     * principal(userId)이 있으면 그걸로, 없으면(Access 만료/미첨부) 유효한 Refresh 쿠키에서 userId를 복원해 폐기한다.
+     */
     @Transactional
-    public void logout(Long userId) {
-        refreshTokenRepository.deleteByUserId(userId);
+    public void logout(Long userId, String refreshToken) {
+        Long targetId = userId;
+        if (targetId == null && refreshToken != null && !refreshToken.isBlank()
+                && jwtTokenProvider.validate(refreshToken)) {
+            targetId = jwtTokenProvider.getUserId(refreshToken);
+        }
+        if (targetId != null) {
+            refreshTokenRepository.deleteByUserId(targetId);
+        }
     }
 
     /** Access/Refresh 발급 + Refresh 해시를 사용자당 1행으로 upsert(회전). */

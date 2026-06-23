@@ -39,6 +39,7 @@ SecurityConfig {
     @Value("${app.cors.allowed-origins}")
     private List<String> allowedOrigins;
 
+
     /** dev 프로파일에서만 빈 등록 → prod에는 존재하지 않아 인증 우회 불가. */
     @Bean
     @Profile("dev")

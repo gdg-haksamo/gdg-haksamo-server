@@ -44,7 +44,9 @@ public class AdminAccountInitializer implements ApplicationRunner {
             log.info("관리자 계정 이미 존재 → 스킵: {}", adminEmail);
             return;
         }
-        userRepository.save(User.createSuperAdmin(adminEmail, passwordEncoder.encode(adminPassword), adminNickname));
+        // ADMIN_NICKNAME이 비어있는(빈 문자열) 채로 주입되면 @Value 기본값이 적용되지 않으므로 여기서 보정
+        String nickname = adminNickname.isBlank() ? "관리자" : adminNickname;
+        userRepository.save(User.createSuperAdmin(adminEmail, passwordEncoder.encode(adminPassword), nickname));
         log.info("최상위 관리자(SUPER_ADMIN) 계정 생성 완료: {}", adminEmail);
     }
 }

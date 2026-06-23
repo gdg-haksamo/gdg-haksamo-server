@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
  */
 public record ResetPasswordRequest(
         @NotBlank(message = "새 비밀번호를 입력해주세요.")
-        @Size(min = 8, message = "비밀번호는 8자 이상이어야 합니다.")
+        @Size(min = 8, max = 72, message = "비밀번호는 8~72자여야 합니다.")  // BCrypt 72바이트 한계
         String newPassword
 ) {
 }

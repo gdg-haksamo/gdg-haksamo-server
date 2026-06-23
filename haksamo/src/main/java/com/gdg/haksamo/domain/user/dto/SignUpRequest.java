@@ -15,7 +15,8 @@ public record SignUpRequest(
         String email,
 
         @NotBlank(message = "비밀번호를 입력해주세요.")
-        @Size(min = 8, message = "비밀번호는 8자 이상이어야 합니다.")
+        // 상한 72자: BCrypt는 72바이트 이후를 무시(절단)하므로 그 안에서 받는다.
+        @Size(min = 8, max = 72, message = "비밀번호는 8~72자여야 합니다.")
         String password,
 
         @NotBlank(message = "닉네임을 입력해주세요.")

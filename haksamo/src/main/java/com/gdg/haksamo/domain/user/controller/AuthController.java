@@ -73,10 +73,11 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal Long userId) {
-        if (userId != null) {
-            authService.logout(userId);
-        }
+    public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal Long userId,
+                                                    HttpServletRequest request) {
+        // Access Token이 없거나 만료돼 principal이 null이어도, Refresh 쿠키로 서버측 토큰을 폐기한다.
+        // (그렇지 않으면 쿠키만 지워지고 서버의 refresh_token이 살아남아 재사용 위험)
+        authService.logout(userId, cookieUtil.resolve(request));
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookieUtil.clear().toString())
                 .body(ApiResponse.success());

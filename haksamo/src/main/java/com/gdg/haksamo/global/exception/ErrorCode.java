@@ -13,6 +13,8 @@ public enum ErrorCode {
     // 공통
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C001", "입력값이 올바르지 않습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C002", "서버 오류가 발생했습니다."),
+    // 동시 요청 등으로 DB 제약(유니크 등) 위반 시 — 500 대신 409로 변환
+    DATA_CONFLICT(HttpStatus.CONFLICT, "C003", "요청이 현재 상태와 충돌합니다. 잠시 후 다시 시도해주세요."),
 
     // 인증 / 인가
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A001", "인증이 필요합니다."),
@@ -38,6 +40,7 @@ public enum ErrorCode {
 
     // 관리자 계정 관리 (SUPER_ADMIN 전용)
     ADMIN_RESTAURANT_REQUIRED(HttpStatus.BAD_REQUEST, "U008", "식당 운영자 계정에는 담당 식당(restaurantId)이 필요합니다."),
+    RESTAURANT_NOT_FOUND(HttpStatus.NOT_FOUND, "U010", "지정한 식당을 찾을 수 없습니다."),
     ADMIN_CANNOT_MODIFY_SELF(HttpStatus.BAD_REQUEST, "U009", "본인 계정의 권한 변경/삭제는 할 수 없습니다.");
 
     private final HttpStatus status;

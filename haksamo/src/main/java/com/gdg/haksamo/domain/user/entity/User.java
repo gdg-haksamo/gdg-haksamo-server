@@ -50,6 +50,7 @@ public class User extends BaseTimeEntity {
     @Column(name = "managed_restaurant_id")
     private Long managedRestaurantId;
 
+    @Column(length = 512)  // FCM 등록 토큰은 255자를 넘을 수 있어 여유 있게 잡는다
     private String fcmToken;
 
     @Column(nullable = false)

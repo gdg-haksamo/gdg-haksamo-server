@@ -19,7 +19,7 @@
 -- v1.5: 관리자 RBAC 3단계 반영
 --   - User.role: ENUM('USER','ADMIN') → ENUM('USER','RESTAURANT_ADMIN','SUPER_ADMIN')
 --   - User.managed_restaurant_id 추가 (RESTAURANT_ADMIN의 담당 식당 — 자기 식당만 관리)
---   - 관리자 페이지: 식당 운영자(자기 식당만) + 운영팀(전체 메뉴/리뷰/계정) 분리 (erd-decisions #25)
+--   - 관리자 페이지: 식당 운영자(자기 식당만) + 운영팀(전체 메뉴/리뷰/계정) 분리 (erd-decisions #27)
 
 CREATE TABLE `User` (
     `user_id`                        BIGINT         NOT NULL AUTO_INCREMENT,
