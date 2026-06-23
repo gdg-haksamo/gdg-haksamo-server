@@ -6,6 +6,7 @@ import com.gdg.haksamo.domain.menu.entity.MenuSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface MenuScheduleRepository extends JpaRepository<MenuSchedule, Long> {
@@ -14,4 +15,6 @@ public interface MenuScheduleRepository extends JpaRepository<MenuSchedule, Long
             LocalDate date,
             MealTime time
     );
+
+    List<MenuSchedule> findByDate(LocalDate date);
 }
