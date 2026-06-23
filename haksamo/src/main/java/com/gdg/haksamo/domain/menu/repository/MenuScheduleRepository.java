@@ -19,5 +19,7 @@ public interface MenuScheduleRepository extends JpaRepository<MenuSchedule, Long
 
     List<MenuSchedule> findByDate(LocalDate date);
 
+    Optional<MenuSchedule> findFirstByMenu(Menu menu);
+
     void deleteByMenu_Restaurant(Restaurant restaurant);
 }

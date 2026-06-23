@@ -8,6 +8,9 @@
 -- v1.3: Menu/MenuSchedule 분리 설계 반영
 --   - MenuSchedule 추가 (오늘 메뉴 리스트 관리)
 --   - Menu 수정 (설명 추가, 품절->MenuSchedule, 특식 삭제)
+-- 최종수정: 2026-06-24
+-- v1.4: 마이페이지 설계 확정 반영
+--   - Preference: 기피(DISLIKED) 제외, 선호 키워드만 저장 → type 컬럼 제거
 
 CREATE TABLE `User` (
     `user_id`                        BIGINT         NOT NULL AUTO_INCREMENT,
@@ -98,11 +101,11 @@ CREATE TABLE `ReviewHelpful` (
     CONSTRAINT `fk_rhelpful_user`   FOREIGN KEY (`user_id`)   REFERENCES `User` (`user_id`)
 );
 
+-- 선호 음식 키워드 (기피 키워드는 받지 않음)
 CREATE TABLE `Preference` (
     `preference_id` BIGINT         NOT NULL AUTO_INCREMENT,
     `user_id`       BIGINT         NOT NULL,
     `keyword`       VARCHAR(255)   NOT NULL,
-    `type`          ENUM('LIKED', 'DISLIKED') NOT NULL,  -- 선호/기피 구분
     PRIMARY KEY (`preference_id`),
     CONSTRAINT `fk_preference_user` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`)
 );

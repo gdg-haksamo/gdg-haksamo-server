@@ -22,9 +22,19 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", message));
     }
 
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(NotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", messageOf(e)));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", e.getMessage()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", messageOf(e)));
+    }
+
+    private String messageOf(Exception e) {
+        return e.getMessage() != null ? e.getMessage() : "요청을 처리할 수 없습니다.";
     }
 }

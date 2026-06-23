@@ -15,4 +15,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("select r.rating, count(r) from Review r where r.menu = :menu group by r.rating")
     List<Object[]> countByRatingGroupedForMenu(@Param("menu") Menu menu);
+
+    @Query("select r.menu.menuId, avg(r.rating) from Review r where r.menu.menuId in :menuIds group by r.menu.menuId")
+    List<Object[]> averageRatingByMenuIds(@Param("menuIds") List<Long> menuIds);
+
+    @Query("select avg(r.rating) from Review r where r.menu = :menu")
+    Double averageRatingForMenu(@Param("menu") Menu menu);
 }
