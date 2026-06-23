@@ -3,6 +3,7 @@ package com.gdg.haksamo.domain.menu.crawler.parser;
 import com.gdg.haksamo.domain.menu.crawler.ParsedMenu;
 import com.gdg.haksamo.domain.menu.entity.MealTime;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 import org.jsoup.nodes.Document;
@@ -45,7 +46,12 @@ public class InformationCenterParser implements MenuParser{
                 //휴일일때 p가 한 개
                 if(pTags.size() < 2) continue;
 
-                String name = menu.ownText() + " " + pTags.get(0).text();
+                //br 나눠서 처리 했는데
+                String name = menu.html();
+                if (name.contains("<p")) name = name.substring(0, name.indexOf("<p"));
+                name = name.replace("<br>", " ");
+                name = name.replaceAll("<[^>]*>", "");
+                name = Parser.unescapeEntities(name, false);
                 name = name.replaceAll("\\s*★\\s*", "");
                 name = name.replaceAll("\\s*\\*2000원의 저녁밥\\*\\s*", "");
                 name = name.replaceAll("\\s*\\(.*?\\)", "");
