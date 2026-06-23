@@ -25,7 +25,7 @@ public class MenuService {
                             schedule.getMenu().getRestaurant().getName(),
                             schedule.getMenu().getName(),
                             schedule.getMenu().getPrice(),
-                            schedule.getMenu().getOperatingTime(),
+                            schedule.getOperatingTime(),
                             schedule.getTime()
                     )
             );

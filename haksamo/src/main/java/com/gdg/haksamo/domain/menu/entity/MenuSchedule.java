@@ -24,5 +24,7 @@ public class MenuSchedule {
     @Enumerated(EnumType.STRING)
     private MealTime time;
 
+    private String operatingTime;
+
     private boolean isSoldOut = false;
 }

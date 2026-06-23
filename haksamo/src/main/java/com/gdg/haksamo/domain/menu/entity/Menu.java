@@ -21,7 +21,6 @@ public class Menu {
 
     private String name;
     private Integer price;
-    private String operatingTime;
 
     private String category;
     private String imageUrl;
