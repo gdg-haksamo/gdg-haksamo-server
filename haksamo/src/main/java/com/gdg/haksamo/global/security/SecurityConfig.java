@@ -28,7 +28,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
  */
 @Configuration
 @RequiredArgsConstructor
-public class SecurityConfig {
+public class
+
+SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
@@ -62,6 +64,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        // Swagger / OpenAPI 문서 (운영에서는 노출 제한 검토)
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        // 관리자 계정 관리 API는 운영팀(SUPER_ADMIN) 전용.
+                        // (경로 기반 게이트 → 거부 시 ExceptionTranslationFilter→JwtAccessDeniedHandler로 403 ApiResponse)
+                        // 식당 운영자(RESTAURANT_ADMIN)의 메뉴/리뷰 조작은 별도 경로가 아니라
+                        // 각 도메인 서비스에서 RestaurantAdminGuard로 "담당 식당"만 허용한다.
+                        .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
                         // [비로그인 접근정책] 메인 "오늘의 학식 메뉴 리스트"만 공개 예정.
                         // 채윤님 메뉴 API 경로 확정 시 아래에 GET 공개 항목 추가 (예: .requestMatchers(HttpMethod.GET, "/api/menus/today").permitAll())
                         // 메뉴 상세 / 추천 / 리뷰 / 마이 등은 공개하지 않음 → 비로그인 시 401(ApiResponse) → FE가 로그인 유도

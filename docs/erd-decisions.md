@@ -367,10 +367,11 @@
 
 ## 23. 관리자 페이지 — 공식당 운영자용 (공식당 미팅 결과)
 
-**결정:** `role=ADMIN` 계정으로 접근하는 관리자 페이지를 제공한다. 핵심은 **클릭 한 번**으로 끝나는 단순 조작.
+**결정:** 관리자 페이지를 제공한다. 핵심은 **클릭 한 번**으로 끝나는 단순 조작. (권한 모델은 #27 참고 — `ADMIN` 단일에서 `RESTAURANT_ADMIN`/`SUPER_ADMIN` 2단계로 확장됨)
 - **품절 처리** — 메뉴 옆 버튼 클릭으로 `MenuSchedule.is_sold_out` 토글 (다음 끼니·다음 날 자동 초기화)
 - **신메뉴 등록** — `Menu` + 당일 `MenuSchedule` 추가
 - **이름·가격 수정** — `Menu.name` / `Menu.price` 수정
+- 위 메뉴 조작은 **본인 담당 식당에 한해서만** 가능 — 각 도메인 서비스에서 `RestaurantAdminGuard.requirePermission(userId, restaurantId)` 호출로 강제.
 
 **이유:**
 - 공식당 사장님 미팅 결과 관리자 페이지 제공 합의 ([[meeting_gongsikdang]])
@@ -413,3 +414,27 @@
 **구현:**
 - 시큐리티 기본이 `anyRequest().authenticated()` → 메뉴 리스트 외 전부 보호. 비로그인 접근 시 401 `ApiResponse` → FE가 "로그인 후 이용" 안내 + 회원가입 유도(추천 카드/상세/타 페이지 공통).
 - "오늘 메뉴 리스트" 엔드포인트는 Menu 도메인(김채윤) 소관 → 경로 확정 시 `SecurityConfig`에 `GET` 공개 1줄 추가. **메뉴 상세는 공개하지 않음**(추측 permitAll 시 상세까지 노출되는 보안 구멍 주의). constitution III 공유자원 협의.
+
+---
+
+## 27. 관리자 RBAC — 식당 운영자 + 운영팀 2단계 + 계정 발급
+
+**결정:** `role`을 `USER` / `RESTAURANT_ADMIN` / `SUPER_ADMIN` 3단계로 둔다. (#23의 단일 `ADMIN`을 분리)
+- **RESTAURANT_ADMIN(식당 운영자)** — `User.managed_restaurant_id`로 묶인 **자기 식당만** 관리(품절·신메뉴·이름/가격·리뷰). 다른 식당은 조작 불가.
+- **SUPER_ADMIN(운영팀)** — 전체 메뉴/리뷰/계정 관리. 식당 운영자 계정 발급·권한 변경·삭제.
+
+**구현:**
+- **인가 2축**:
+  1. *계정 관리 API*(`/api/admin/**`) → `SecurityConfig` 경로 게이트 `hasRole('SUPER_ADMIN')`. 거부 시 `ExceptionTranslationFilter`→`JwtAccessDeniedHandler`로 403 `ApiResponse`.
+  2. *식당 단위 메뉴/리뷰 조작* → 경로가 아니라 각 도메인 서비스에서 `RestaurantAdminGuard.requirePermission(userId, restaurantId)` 호출. SUPER_ADMIN 전체 통과, RESTAURANT_ADMIN은 `managed_restaurant_id` 일치 시만 통과, 아니면 `A008`(403). 권한 규칙을 한 곳에 모아 도메인마다 흩어지지 않게 함.
+- **계정 발급**: 운영자 계정은 일반 회원가입(이메일 인증)과 별개로 **SUPER_ADMIN이 직접 발급**(`POST /api/admin/users/restaurant-admin`). 이메일 인증 단계 없음.
+- **부트스트랩**: 최초 SUPER_ADMIN은 가입 경로가 없으므로 `AdminAccountInitializer`가 env(`ADMIN_EMAIL`/`ADMIN_PASSWORD`/`ADMIN_NICKNAME`)로 **앱 시작 시 1회 멱등 시딩**. 평문은 env/Secrets에만, DB엔 BCrypt 해시. 이미 존재하면 스킵.
+- **잠금 방지**: SUPER_ADMIN이 본인 계정의 권한 변경·삭제는 불가(`U009`).
+- **managed_restaurant_id**: Restaurant 엔티티(채윤님)와의 조기 결합을 피해 JPA에선 FK 없는 `Long` 컬럼으로 보유. 식당 존재 검증은 Restaurant 도메인 머지 후 추가.
+
+**이유/트레이드오프:**
+- 공식당·복지관 등 식당이 5곳 → 식당마다 다른 운영자 계정이 자기 식당만 만지게 해야 사고(타 식당 메뉴 오조작) 방지.
+- 운영팀(우리)은 전체를 봐야 하므로 상위 권한 분리.
+- 경로 게이트(계정)와 가드 컴포넌트(식당 자원)를 나눈 이유: 식당 자원 조작은 같은 경로(`/api/menus/...`)라도 *누구의 식당이냐*에 따라 허용이 갈려 경로만으론 못 막음 → 서비스 레벨 가드가 필요.
+
+**비고:** 메뉴/리뷰 관리 API 본체는 Menu/Restaurant/Review 도메인(김채윤) 위에 얹힌다. 본 작업은 RBAC 기반·계정 관리·가드까지 제공하고, 메뉴/리뷰 관리 엔드포인트는 채윤님 엔티티 머지 후 가드 호출만 추가하면 되도록 설계(api-spec.md "관리자" 절의 *예정* 항목).

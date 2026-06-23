@@ -22,6 +22,8 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "A005", "리프레시 토큰이 없습니다. 다시 로그인해주세요."),
     REFRESH_TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "A006", "리프레시 토큰이 일치하지 않습니다. 다시 로그인해주세요."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "A007", "접근 권한이 없습니다."),
+    // 식당 운영자가 자신이 담당하지 않은 식당의 메뉴/리뷰를 조작하려 할 때 (RestaurantAdminGuard)
+    RESTAURANT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "A008", "해당 식당에 대한 권한이 없습니다."),
 
     // 사용자
     EMAIL_DUPLICATED(HttpStatus.CONFLICT, "U001", "이미 가입된 이메일입니다."),
@@ -32,7 +34,11 @@ public enum ErrorCode {
     VERIFICATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "U004", "인증 요청 내역이 없습니다. 인증번호를 먼저 받아주세요."),
     VERIFICATION_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "U005", "인증번호가 만료되었습니다. 다시 요청해주세요."),
     VERIFICATION_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "U006", "인증번호가 일치하지 않습니다."),
-    VERIFICATION_TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "U007", "인증 시도 횟수를 초과했습니다. 인증번호를 다시 요청해주세요.");
+    VERIFICATION_TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "U007", "인증 시도 횟수를 초과했습니다. 인증번호를 다시 요청해주세요."),
+
+    // 관리자 계정 관리 (SUPER_ADMIN 전용)
+    ADMIN_RESTAURANT_REQUIRED(HttpStatus.BAD_REQUEST, "U008", "식당 운영자 계정에는 담당 식당(restaurantId)이 필요합니다."),
+    ADMIN_CANNOT_MODIFY_SELF(HttpStatus.BAD_REQUEST, "U009", "본인 계정의 권한 변경/삭제는 할 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

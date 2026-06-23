@@ -68,6 +68,60 @@
 ```
 - 200 / 401 `A001`(미인증) / 404 `U002`(사용자 없음)
 
+## 관리자 (Admin)
+
+> 권한 모델: `USER`(학생) / `RESTAURANT_ADMIN`(식당 운영자, 자기 식당만) / `SUPER_ADMIN`(운영팀, 전체). 설계: erd-decisions #27.
+
+### 계정 관리 — SUPER_ADMIN 전용 (구현 완료)
+
+모든 `/api/admin/**` 경로는 `SUPER_ADMIN`만 접근 가능(아니면 403 `A007`).
+
+#### 8) 계정 목록 조회
+`GET /api/admin/users?role={ROLE}&page=0&size=20` · SUPER_ADMIN
+- `role` 생략 시 전체. 값: `USER` | `RESTAURANT_ADMIN` | `SUPER_ADMIN`
+- 200: `{ "users": [ { "userId", "email", "nickname", "role", "managedRestaurantId" } ], "page", "size", "totalElements", "totalPages" }`
+
+#### 9) 식당 운영자 계정 발급
+`POST /api/admin/users/restaurant-admin` · SUPER_ADMIN
+```json
+{ "email": "gongsikdang@knu.ac.kr", "password": "********", "nickname": "공식당", "restaurantId": 1 }
+```
+- 201: `{ "userId", "email", "nickname", "role": "RESTAURANT_ADMIN", "managedRestaurantId": 1 }`
+- 400 `U008`(restaurantId 누락) / 400 `C001`(검증 실패) / 409 `U001`(이메일 중복)
+- 일반 회원가입과 달리 **이메일 인증 단계 없음**(운영팀이 직접 발급).
+
+#### 10) 권한/담당 식당 변경
+`PATCH /api/admin/users/{userId}/role` · SUPER_ADMIN
+```json
+{ "role": "RESTAURANT_ADMIN", "managedRestaurantId": 2 }
+```
+- 200: 변경된 계정 정보. `role`이 RESTAURANT_ADMIN이 아니면 담당 식당 자동 해제(null).
+- 400 `U008`(RESTAURANT_ADMIN인데 식당 미지정) / 400 `U009`(본인 계정 변경 불가) / 404 `U002`
+
+#### 11) 비밀번호 재설정
+`PATCH /api/admin/users/{userId}/password` · SUPER_ADMIN
+```json
+{ "newPassword": "********" }
+```
+- 200 / 400 `C001`(8자 미만) / 404 `U002`
+
+#### 12) 계정 삭제
+`DELETE /api/admin/users/{userId}` · SUPER_ADMIN
+- 200 / 400 `U009`(본인 계정 삭제 불가) / 404 `U002`
+
+### 메뉴/리뷰 관리 — RESTAURANT_ADMIN·SUPER_ADMIN (예정 · Menu/Review 도메인 연동)
+
+> 아래는 Menu/Restaurant/Review 도메인(김채윤) 위에 얹힌다. 각 서비스가 조작 전
+> `RestaurantAdminGuard.requirePermission(userId, restaurantId)`를 호출해 **본인 담당 식당만** 허용한다.
+> RESTAURANT_ADMIN이 타 식당 자원을 건드리면 403 `A008`. SUPER_ADMIN은 전체 통과.
+
+- **품절 토글** `PATCH /api/menus/schedules/{scheduleId}/sold-out` — `MenuSchedule.is_sold_out` 토글
+- **신메뉴 등록** `POST /api/menus` — `Menu` + 당일 `MenuSchedule` 생성
+- **이름·가격 수정** `PATCH /api/menus/{menuId}` — `Menu.name` / `Menu.price`
+- **리뷰 삭제(부적절 리뷰)** `DELETE /api/reviews/{reviewId}` — SUPER_ADMIN 전체, RESTAURANT_ADMIN은 자기 식당 메뉴의 리뷰만
+
+(경로·요청 형식은 채윤님 도메인 구현 시 확정 → 본 절에 반영)
+
 ## 에러 코드 표
 
 | code | HTTP | 의미 |
@@ -80,6 +134,7 @@
 | A005 | 401 | 리프레시 토큰 없음 |
 | A006 | 401 | 리프레시 토큰 불일치(재사용) |
 | A007 | 403 | 권한 없음 |
+| A008 | 403 | 담당하지 않은 식당 자원 접근(식당 운영자) |
 | U001 | 409 | 이메일 중복 |
 | U002 | 404 | 사용자 없음 |
 | U003 | 400 | 이메일 미인증 |
@@ -87,6 +142,8 @@
 | U005 | 400 | 인증번호 만료 |
 | U006 | 400 | 인증번호 불일치 |
 | U007 | 429 | 인증 시도 횟수 초과 |
+| U008 | 400 | 식당 운영자 계정에 담당 식당 미지정 |
+| U009 | 400 | 본인 계정 권한 변경/삭제 불가 |
 
 ## 접근 정책 (비로그인)
 

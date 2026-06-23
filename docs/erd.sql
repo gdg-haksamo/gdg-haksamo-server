@@ -15,6 +15,11 @@
 --   - Recommendation: refresh_count·excluded_menu_ids 추가 (새로고침 3회 제한·중복 추천 방지)
 --   - 인증: refresh_token(토큰 회전), email_verification(회원가입 1단계 이메일 인증) 테이블 추가
 --   - 회원가입 이메일 도메인 제한(@knu) 제거 — 형식·중복·소유(인증번호)만 검증
+-- 작성: 김동우 / 최종수정: 2026-06-24
+-- v1.5: 관리자 RBAC 3단계 반영
+--   - User.role: ENUM('USER','ADMIN') → ENUM('USER','RESTAURANT_ADMIN','SUPER_ADMIN')
+--   - User.managed_restaurant_id 추가 (RESTAURANT_ADMIN의 담당 식당 — 자기 식당만 관리)
+--   - 관리자 페이지: 식당 운영자(자기 식당만) + 운영팀(전체 메뉴/리뷰/계정) 분리 (erd-decisions #25)
 
 CREATE TABLE `User` (
     `user_id`                        BIGINT         NOT NULL AUTO_INCREMENT,
@@ -23,7 +28,10 @@ CREATE TABLE `User` (
     `nickname`                       VARCHAR(255)   NOT NULL,
     `department`                     VARCHAR(255)   NULL,                             -- 학과 (회원가입 시 입력, 예: 컴퓨터학부)
     `grade`                          INT            NULL,                             -- 학년 (예: 2 = 2학년)
-    `role`                           ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER',  -- 관리자 구분
+    -- 권한 3단계: USER(학생) / RESTAURANT_ADMIN(식당 운영자, 자기 식당만) / SUPER_ADMIN(운영팀, 전체)
+    `role`                           ENUM('USER', 'RESTAURANT_ADMIN', 'SUPER_ADMIN') NOT NULL DEFAULT 'USER',
+    -- RESTAURANT_ADMIN이 관리하는 식당. USER/SUPER_ADMIN은 NULL. (앱 레벨 FK, JPA는 Long 컬럼으로 보유)
+    `managed_restaurant_id`          BIGINT         NULL,
     `fcm_token`                      VARCHAR(255)   NULL,                             -- FCM 푸시 알림용
     -- 알림 설정 (마이페이지 토글 5종)
     `push_notification_enabled`      BOOLEAN        NOT NULL DEFAULT TRUE,            -- 마스터 푸시 on/off

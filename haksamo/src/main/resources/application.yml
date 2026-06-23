@@ -26,6 +26,11 @@ app:
   cors:
     # 쿠키 전송을 위해 와일드카드(*) 불가 — 명시적 origin 목록 (콤마 구분)
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+  # 부트스트랩 관리자 계정 (env로 주입, 없으면 시더 스킵). 평문은 env/Secrets에만, DB엔 BCrypt 해시 저장
+  admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+    nickname: ${ADMIN_NICKNAME:관리자}
   # 이메일 인증번호 (회원가입 1단계)
   email-verification:
     code-ttl: ${EMAIL_CODE_TTL:180000}        # 인증번호 유효시간(ms). FE 타이머와 일치시킬 것 (현재 3분)
