@@ -58,7 +58,7 @@
    - 회원가입 3단계: ①이메일 인증(인증번호 6자리·3분) ②기본정보(닉네임·비번·학과) + 자주 가는 식당 ③선호 키워드 선택
    - 로그인 유지: Access(메모리) + Refresh(httpOnly 쿠키, 회전)
    - 비로그인 접근: 오늘 메뉴 리스트만 공개, 추천·상세·기타는 401 → 로그인 유도
-10. **관리자 (공식당 운영자용, role=ADMIN)**: 클릭 한 번으로 품절 처리(`MenuSchedule.is_sold_out`), 신메뉴 등록, 메뉴 이름·가격 수정
+10. **관리자 RBAC (RESTAURANT_ADMIN=식당 운영자, 자기 식당만 / SUPER_ADMIN=운영팀, 전체+계정관리)**: 클릭 한 번으로 품절 처리(`MenuSchedule.is_sold_out`), 신메뉴 등록, 메뉴 이름·가격 수정 (식당 단위 권한은 `RestaurantAdminGuard`, erd-decisions #27)
     - 로드맵: **2026-07-05 공식당 관리자 페이지 선제공**, **2026-07-10 베타 런칭** (출처: docs/meeting-gongsikdang.md)
 
 ## 후순위 기능

@@ -22,7 +22,7 @@
 | 키워드 수정 모달 | 마이페이지 → 키워드 카드 | |
 | 회원가입 (3단계) | 미로그인 진입 | ①이메일 인증 ②기본정보+식당 ③키워드 |
 | 로그인 | 미로그인 진입 | |
-| 관리자 페이지 | role=ADMIN | 품절 처리 / 신메뉴 등록 / 이름·가격 수정 (Figma 미설계) |
+| 관리자 페이지 | RESTAURANT_ADMIN(자기 식당)/SUPER_ADMIN(전체) | 품절 처리 / 신메뉴 등록 / 이름·가격 수정 (Figma 미설계) |
 
 ---
 
@@ -173,13 +173,14 @@
 
 ---
 
-## 7-2. 관리자 페이지 (공식당 운영자용, role=ADMIN)
+## 7-2. 관리자 페이지 (RESTAURANT_ADMIN=식당 운영자 / SUPER_ADMIN=운영팀)
 
-> 공식당 사장님 미팅 결과 제공 합의. Figma에는 아직 화면이 없어 별도 설계 필요. (출처: `meeting-gongsikdang.md`)
+> 공식당 사장님 미팅 결과 제공 합의. Figma에는 아직 화면이 없어 별도 설계 필요. (출처: `meeting-gongsikdang.md`, 권한 모델은 erd-decisions #27)
 
 - **품절 처리** — 메뉴 옆 [품절] 버튼 클릭 한 번 → `MenuSchedule.is_sold_out` 토글. 다음 끼니·다음 날 자동 "판매중" 복귀(스케줄 wipe). 품절 메뉴는 학생 추천·알림에서 자동 제외.
 - **신메뉴 등록** — `Menu` + 당일 `MenuSchedule` 추가
 - **이름·가격 수정** — `Menu.name` / `Menu.price` 수정
+- 식당 운영자는 **자기 식당만**(`User.managed_restaurant_id`, `RestaurantAdminGuard`로 강제), 운영팀(SUPER_ADMIN)은 전체 + 계정 관리(`/api/admin/**`).
 - 로드맵: **2026-07-05 선제공**, **2026-07-10 베타 런칭**
 
 ---
