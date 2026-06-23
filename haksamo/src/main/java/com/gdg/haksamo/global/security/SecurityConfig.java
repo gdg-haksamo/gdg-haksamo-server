@@ -73,9 +73,8 @@ SecurityConfig {
                         // 각 도메인 서비스에서 RestaurantAdminGuard로 "담당 식당"만 허용한다.
                         .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
                         // [비로그인 접근정책] 메인 "오늘의 학식 메뉴 리스트"만 공개 예정.
-                        // 현재 채윤님 MenuController는 `/menus`(GET, /api 프리픽스 없음) — 컨벤션 통일 후 공개 1줄 추가.
-                        //   (통일 시 예: .requestMatchers(HttpMethod.GET, "/api/menus").permitAll())
-                        //   ※ URL 프리픽스·응답 래퍼 컨벤션 이슈는 docs/admin-integration-notes.md §2 참고
+                        // 현재 메뉴 조회 컨트롤러 경로(`/menus`) 확정·컨벤션 통일 후 GET 공개 1줄 추가.
+                        //   (예: .requestMatchers(HttpMethod.GET, "/api/menus").permitAll())
                         // 메뉴 상세 / 추천 / 리뷰 / 마이 등은 공개하지 않음 → 비로그인 시 401(ApiResponse) → FE가 로그인 유도
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e

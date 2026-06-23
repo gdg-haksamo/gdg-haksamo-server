@@ -61,6 +61,10 @@ specs/
 CLAUDE.md
 .mcp.json
 
+# 내부 작업 메모 — GitHub(멘토 공유 공간)에 푸시하지 않음
+docs/admin-integration-notes.md
+docs/meeting-gongsikdang.md
+
 # Misc
 *.bak
 *.tmp
