@@ -1,10 +1,23 @@
 package com.gdg.haksamo.domain.restaurant;
 
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+import lombok.*;
 
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Restaurant {
-    @ManyToOne
-    @JoinColumn(name = "restaurant_id")
-    private Restaurant restaurant;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long restaurantId;
+
+    private Double mapX;
+    private Double mapY;
+    private String operatingTime;
+
+    @Column(nullable = false, unique = true)
+    private String name;
 }

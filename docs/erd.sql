@@ -69,6 +69,7 @@ CREATE TABLE `MenuSchedule` (
     `menu_id`       BIGINT   NOT NULL,
     `date`          DATE     NOT NULL,
     `time`          ENUM('BREAKFAST', 'LUNCH', 'DINNER')  NOT NULL,
+    `operating_time` VARCHAR(255)  NOT NULL,
     `is_sold_out`   BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (`schedule_id`),
     UNIQUE KEY `uq_sched` (`menu_id`, `date`, `time`),

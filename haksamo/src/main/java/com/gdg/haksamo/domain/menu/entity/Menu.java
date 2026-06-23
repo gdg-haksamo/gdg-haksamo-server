@@ -15,10 +15,12 @@ public class Menu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long menuId;
 
-    //Restaurant.java 엔티티 추가 후 수정하기
-    private String restaurant;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "restaurant_id")
+    private Restaurant restaurant;
+
     private String name;
-    private int price;
+    private Integer price;
     private String operatingTime;
 
     private String category;
