@@ -49,8 +49,8 @@ public class MenuCrawlerService {
     }
 
     //&selDate=2026-06-15 : 주소 뒤에 붙이면 메뉴 다 있는 주(6/15) 편성표 가져옴
-    @PostConstruct      //실행하면 바로 크롤링 (테스트용)
-    //@Scheduled(cron = "0 0 1 * * MON")
+    //@PostConstruct      //실행하면 바로 크롤링 (테스트용)
+    @Scheduled(cron = "0 0 1 * * MON")
     void crawl() {
         try {
             //정보센터
