@@ -59,6 +59,7 @@ htmlcov/
 .specify/
 specs/
 CLAUDE.md
+.mcp.json
 
 # Misc
 *.bak

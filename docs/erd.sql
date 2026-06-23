@@ -8,12 +8,21 @@
 -- v1.3: Menu/MenuSchedule 분리 설계 반영
 --   - MenuSchedule 추가 (오늘 메뉴 리스트 관리)
 --   - Menu 수정 (설명 추가, 품절->MenuSchedule, 특식 삭제)
+-- 작성: 김동우 / 최종수정: 2026-06-23
+-- v1.4: 디자인(Figma)·공식당 미팅 + 인증 구현 반영
+--   - User: department(학과)·grade(학년) 추가 (회원가입 시 수집)
+--   - Menu: image_url·description·영양정보는 신규 메뉴 첫 크롤링 시 Gemini 생성 (주석 명시)
+--   - Recommendation: refresh_count·excluded_menu_ids 추가 (새로고침 3회 제한·중복 추천 방지)
+--   - 인증: refresh_token(토큰 회전), email_verification(회원가입 1단계 이메일 인증) 테이블 추가
+--   - 회원가입 이메일 도메인 제한(@knu) 제거 — 형식·중복·소유(인증번호)만 검증
 
 CREATE TABLE `User` (
     `user_id`                        BIGINT         NOT NULL AUTO_INCREMENT,
     `email`                          VARCHAR(255)   NOT NULL,
     `password`                       VARCHAR(255)   NOT NULL,
     `nickname`                       VARCHAR(255)   NOT NULL,
+    `department`                     VARCHAR(255)   NULL,                             -- 학과 (회원가입 시 입력, 예: 컴퓨터학부)
+    `grade`                          INT            NULL,                             -- 학년 (예: 2 = 2학년)
     `role`                           ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER',  -- 관리자 구분
     `fcm_token`                      VARCHAR(255)   NULL,                             -- FCM 푸시 알림용
     -- 알림 설정 (마이페이지 토글 5종)
@@ -53,14 +62,14 @@ CREATE TABLE `Menu` (
     `name`          VARCHAR(255)    NOT NULL,
     `price`         INT             NULL,
     `category`      VARCHAR(255)    NULL,
-    `image_url`     VARCHAR(255)    NULL,
-    `description`   VARCHAR(255)    NULL,
-    `calories`      INT             NULL,
+    `image_url`     VARCHAR(255)    NULL,   -- 신규 메뉴 첫 크롤링 시 Gemini 생성 (기존 메뉴는 스킵)
+    `description`   VARCHAR(255)    NULL,   -- AI 한줄설명: 신규 메뉴 첫 크롤링 시 Gemini 생성 (메뉴 상세의 'AI 한줄 설명')
+    `calories`      INT             NULL,   -- 영양정보(칼·탄·단·지): 신규 메뉴 첫 크롤링 시 Gemini 생성, null인 경우만 호출
     `protein`       INT             NULL,
     `carb`          INT             NULL,
     `fat`           INT             NULL,
     PRIMARY KEY (`menu_id`),
-    UNIQUE KEY `uq_menu_identity` (`restaurant_id`, `name`),
+    UNIQUE KEY `uq_menu_identity` (`restaurant_id`, `name`),  -- (식당, 이름) 식별자 → upsert 기준, 리뷰 정합성 방어선
     CONSTRAINT `fk_menu_restaurant` FOREIGN KEY (`restaurant_id`) REFERENCES `Restaurant` (`restaurant_id`)
 );
 
@@ -106,14 +115,16 @@ CREATE TABLE `Preference` (
     CONSTRAINT `fk_preference_user` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`)
 );
 
--- AI 추천 캐시 헤더 (하루 1회 생성 + 새로고침 시 동일 row UPDATE)
+-- AI 추천 캐시 헤더 (하루 1회 생성 + 새로고침 시 동일 row UPDATE, 최대 3회)
 CREATE TABLE `Recommendation` (
-    `recommendation_id` BIGINT   NOT NULL AUTO_INCREMENT,
-    `user_id`           BIGINT   NOT NULL,
-    `date`              DATE     NOT NULL,
-    `reason`            TEXT     NULL,   -- Gemini 추천 이유
-    `created_at`        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at`        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- 새로고침 시각
+    `recommendation_id`  BIGINT   NOT NULL AUTO_INCREMENT,
+    `user_id`            BIGINT   NOT NULL,
+    `date`               DATE     NOT NULL,
+    `reason`             TEXT     NULL,    -- Gemini 추천 이유 (해당 추천 row 단위)
+    `refresh_count`      INT      NOT NULL DEFAULT 0,   -- 오늘 새로고침 횟수 (최대 3회)
+    `excluded_menu_ids`  JSON     NULL,    -- 오늘 이미 추천한 menu_id 목록 (중복 추천 방지용)
+    `created_at`         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- 마지막 새로고침 시각
     PRIMARY KEY (`recommendation_id`),
     UNIQUE KEY `uq_recommendation_user_date` (`user_id`, `date`),  -- 하루 1행 강제
     CONSTRAINT `fk_recommendation_user` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`)
@@ -149,4 +160,33 @@ CREATE TABLE `Event` (
     `end_date`   DATE           NULL,
     `created_at` DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`event_id`)
+);
+
+-- ===== 인증 (Auth) =====
+
+-- Refresh Token (사용자당 1행 = 단일 디바이스). 토큰 해시 저장 + 회전/재사용 감지용.
+CREATE TABLE `refresh_token` (
+    `id`         BIGINT       NOT NULL AUTO_INCREMENT,
+    `user_id`    BIGINT       NOT NULL,
+    `token_hash` VARCHAR(512) NOT NULL,                  -- 원문 대신 SHA-256 해시 저장
+    `expires_at` DATETIME     NOT NULL,
+    `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_refresh_user` (`user_id`)              -- 유저당 1행 (재로그인 시 회전)
+);
+
+-- 회원가입 1단계 이메일 인증 (이메일당 1행, 재요청 시 덮어씀). 도메인 제한 없음 — 소유 검증.
+CREATE TABLE `email_verification` (
+    `id`                  BIGINT      NOT NULL AUTO_INCREMENT,
+    `email`               VARCHAR(255) NOT NULL,
+    `code`                VARCHAR(6)  NOT NULL,           -- 6자리 인증번호
+    `expires_at`          DATETIME    NOT NULL,           -- 인증번호 유효 만료 (기본 3분, FE 타이머와 일치)
+    `verified`            BOOLEAN     NOT NULL DEFAULT FALSE,
+    `attempt_count`       INT         NOT NULL DEFAULT 0, -- 검증 시도 횟수 (제한 5회)
+    `verified_expires_at` DATETIME    NULL,               -- 인증 완료 상태 만료(회원가입 마감 시한, 기본 30분)
+    `created_at`          DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`          DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_email_verification_email` (`email`)
 );

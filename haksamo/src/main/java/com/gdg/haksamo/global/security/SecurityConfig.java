@@ -1,0 +1,93 @@
+package com.gdg.haksamo.global.security;
+
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+/**
+ * 시큐리티 설정.
+ * - 세션리스(JWT) + CSRF off + CORS(자격증명 허용)
+ * - /api/auth/** 는 공개, 나머지는 인증 필요
+ * - JwtAuthenticationFilter로 Bearer 토큰 인증
+ * - dev 프로파일에서만 DummyAuthFilter를 뒤에 추가(토큰 없으면 userId=1 주입)
+ */
+@Configuration
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
+    private final JwtAccessDeniedHandler accessDeniedHandler;
+
+    @Value("${app.cors.allowed-origins}")
+    private List<String> allowedOrigins;
+
+    /** dev 프로파일에서만 빈 등록 → prod에는 존재하지 않아 인증 우회 불가. */
+    @Bean
+    @Profile("dev")
+    public DummyAuthFilter dummyAuthFilter() {
+        return new DummyAuthFilter();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   ObjectProvider<DummyAuthFilter> dummyAuthFilterProvider)
+            throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // [비로그인 접근정책] 메인 "오늘의 학식 메뉴 리스트"만 공개 예정.
+                        // 채윤님 메뉴 API 경로 확정 시 아래에 GET 공개 항목 추가 (예: .requestMatchers(HttpMethod.GET, "/api/menus/today").permitAll())
+                        // 메뉴 상세 / 추천 / 리뷰 / 마이 등은 공개하지 않음 → 비로그인 시 401(ApiResponse) → FE가 로그인 유도
+                        .anyRequest().authenticated())
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
+                        UsernamePasswordAuthenticationFilter.class);
+
+        DummyAuthFilter dummyAuthFilter = dummyAuthFilterProvider.getIfAvailable();
+        if (dummyAuthFilter != null) {
+            http.addFilterAfter(dummyAuthFilter, JwtAuthenticationFilter.class);
+        }
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true); // Refresh Token 쿠키 전송을 위해 필수
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+}

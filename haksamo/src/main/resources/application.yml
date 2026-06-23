@@ -13,5 +13,21 @@ server:
 
 jwt:
   secret: ${JWT_SECRET}
-  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:1209600000}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}          # 1시간
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:1209600000}     # 14일
+
+app:
+  # Refresh Token 쿠키 속성 (프로파일/환경별 override)
+  #  - dev(같은 사이트, http localhost): Lax / secure=false
+  #  - prod(FE와 다른 도메인): None / secure=true  → CD .env에서 COOKIE_* 주입
+  cookie:
+    secure: ${COOKIE_SECURE:false}
+    same-site: ${COOKIE_SAME_SITE:Lax}
+  cors:
+    # 쿠키 전송을 위해 와일드카드(*) 불가 — 명시적 origin 목록 (콤마 구분)
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+  # 이메일 인증번호 (회원가입 1단계)
+  email-verification:
+    code-ttl: ${EMAIL_CODE_TTL:180000}        # 인증번호 유효시간(ms). FE 타이머와 일치시킬 것 (현재 3분)
+    verified-ttl: ${EMAIL_VERIFIED_TTL:1800000} # 인증 완료 후 회원가입까지 허용 시간(ms, 30분)
+    max-attempts: ${EMAIL_MAX_ATTEMPTS:5}      # 인증번호 검증 시도 제한 횟수
