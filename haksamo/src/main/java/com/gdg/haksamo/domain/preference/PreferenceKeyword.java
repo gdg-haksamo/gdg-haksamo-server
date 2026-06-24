@@ -27,6 +27,9 @@ public enum PreferenceKeyword {
     LOW_CALORIE("건강 목표", "저칼로리"),
     HIGH_PROTEIN("건강 목표", "고단백");
 
+    /** 한 번에 선택 가능한 최대 키워드 수(= 전체 키워드 수). 요청 검증 상한으로 사용. 키워드 추가 시 함께 갱신. */
+    public static final int MAX_SELECTION = 18;
+
     private final String category;
     private final String label;
 

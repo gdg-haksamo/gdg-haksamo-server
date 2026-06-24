@@ -7,13 +7,10 @@ import com.gdg.haksamo.domain.mypage.dto.MyPageResponse;
 import com.gdg.haksamo.domain.mypage.dto.NotificationSettingsResponse;
 import com.gdg.haksamo.domain.mypage.dto.NotificationSettingsUpdateRequest;
 import com.gdg.haksamo.domain.mypage.dto.PreferencesUpdateRequest;
-import com.gdg.haksamo.domain.preference.Preference;
-import com.gdg.haksamo.domain.preference.PreferenceKeyword;
 import com.gdg.haksamo.domain.preference.PreferenceRepository;
-import com.gdg.haksamo.domain.restaurant.FavoriteRestaurant;
+import com.gdg.haksamo.domain.preference.PreferenceService;
 import com.gdg.haksamo.domain.restaurant.FavoriteRestaurantRepository;
-import com.gdg.haksamo.domain.restaurant.Restaurant;
-import com.gdg.haksamo.domain.restaurant.RestaurantRepository;
+import com.gdg.haksamo.domain.restaurant.FavoriteRestaurantService;
 import com.gdg.haksamo.domain.review.repository.ReviewHelpfulRepository;
 import com.gdg.haksamo.domain.review.repository.ReviewRepository;
 import com.gdg.haksamo.domain.user.entity.User;
@@ -34,8 +31,9 @@ public class MyPageService {
     private final ReviewRepository reviewRepository;
     private final ReviewHelpfulRepository reviewHelpfulRepository;
     private final FavoriteRestaurantRepository favoriteRestaurantRepository;
+    private final FavoriteRestaurantService favoriteRestaurantService;
     private final PreferenceRepository preferenceRepository;
-    private final RestaurantRepository restaurantRepository;
+    private final PreferenceService preferenceService;
     private final EventRepository eventRepository;
 
     public MyPageResponse getMyPage(Long userId) {
@@ -73,36 +71,13 @@ public class MyPageService {
     @Transactional
     public void updateFavoriteRestaurants(Long userId, FavoriteRestaurantsUpdateRequest request) {
         User user = getUser(userId);
-
-        List<Restaurant> restaurants = restaurantRepository.findAllById(request.restaurantIds());
-        if (restaurants.size() != request.restaurantIds().size()) {
-            throw new BusinessException(ErrorCode.RESTAURANT_NOT_FOUND);
-        }
-
-        favoriteRestaurantRepository.deleteByUser(user);
-        for (Restaurant restaurant : restaurants) {
-            favoriteRestaurantRepository.save(
-                    FavoriteRestaurant.builder()
-                            .user(user)
-                            .restaurant(restaurant)
-                            .build()
-            );
-        }
+        favoriteRestaurantService.replaceFavorites(user, request.restaurantIds());
     }
 
     @Transactional
     public void updatePreferences(Long userId, PreferencesUpdateRequest request) {
         User user = getUser(userId);
-
-        preferenceRepository.deleteByUser(user);
-        for (PreferenceKeyword keyword : request.keywords()) {
-            preferenceRepository.save(
-                    Preference.builder()
-                            .user(user)
-                            .keyword(keyword)
-                            .build()
-            );
-        }
+        preferenceService.replaceKeywords(user, request.keywords());
     }
 
     @Transactional
