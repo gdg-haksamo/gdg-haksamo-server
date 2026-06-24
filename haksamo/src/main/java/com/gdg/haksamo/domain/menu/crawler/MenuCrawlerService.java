@@ -22,8 +22,9 @@ public class MenuCrawlerService {
     private final GongStaffParser gongStaffParser;
 
     private final MenuScheduleSaveService menuScheduleSaveService;
+    private final MenuInfoEnrichmentService menuInfoEnrichmentService;
 
-    public MenuCrawlerService(InformationCenterParser informationCenterParser, WelfareParser welfareParser, CheomseongParser cheomseongParser, GpParser gpParser, GongStudentParser gongStudentParser, GongStaffParser gongStaffParser, MenuScheduleSaveService menuScheduleSaveService) {
+    public MenuCrawlerService(InformationCenterParser informationCenterParser, WelfareParser welfareParser, CheomseongParser cheomseongParser, GpParser gpParser, GongStudentParser gongStudentParser, GongStaffParser gongStaffParser, MenuScheduleSaveService menuScheduleSaveService, MenuInfoEnrichmentService menuInfoEnrichmentService) {
         this.informationCenterParser = informationCenterParser;
         this.welfareParser = welfareParser;
         this.cheomseongParser = cheomseongParser;
@@ -32,6 +33,7 @@ public class MenuCrawlerService {
         this.gongStaffParser = gongStaffParser;
 
         this.menuScheduleSaveService = menuScheduleSaveService;
+        this.menuInfoEnrichmentService = menuInfoEnrichmentService;
     }
 
     //&selDate=2026-06-15 : 주소 뒤에 붙이면 메뉴 다 있는 주(6/15) 편성표 가져옴
@@ -95,5 +97,9 @@ public class MenuCrawlerService {
         } catch (Exception e) {
             log.error("공식당 학생식당 메뉴 크롤링 실패", e);
         }
+
+        // 편성 저장 후, 신규 메뉴(설명·탄단지 비어있음)만 골라 AI로 정보 생성·저장.
+        // 비동기 — 크롤 응답을 막지 않고, 내부에서 분당 한도 아래로 throttle하며 진행.
+        menuInfoEnrichmentService.enrichMissingAsync();
     }
 }
