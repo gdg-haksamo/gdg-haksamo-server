@@ -55,7 +55,6 @@ public enum ErrorCode {
     // AI 추천 (Recommendation)
     RECOMMENDATION_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "오늘 추천 내역이 없습니다. 먼저 추천을 조회해주세요."),
     NO_MENU_TO_RECOMMEND(HttpStatus.NOT_FOUND, "R002", "오늘 추천할 수 있는 메뉴가 없습니다."),
-    RECOMMENDATION_REFRESH_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "R003", "오늘 추천 새로고침 횟수를 모두 사용했습니다."),
     RECOMMENDATION_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "R004", "추천 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
 
     private final HttpStatus status;
