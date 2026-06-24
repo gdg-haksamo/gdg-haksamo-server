@@ -21,7 +21,8 @@ public class Review {
     @JoinColumn(name = "menu_id")
     private Menu menu;
 
-    // TODO: User 엔티티 합류 시 @ManyToOne User user 로 교체
+    // User FK는 MVP에선 의도적으로 미연결(느슨한 결합). 닉네임은 서비스에서 배치 lookup.
+    // @ManyToOne User 전환은 후속 작업(#78 참고).
     private Long userId;
 
     private Integer rating;

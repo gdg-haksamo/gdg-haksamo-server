@@ -8,6 +8,7 @@ import com.gdg.haksamo.domain.user.dto.UpdateUserRoleRequest;
 import com.gdg.haksamo.domain.restaurant.RestaurantRepository;
 import com.gdg.haksamo.domain.user.entity.Role;
 import com.gdg.haksamo.domain.user.entity.User;
+import com.gdg.haksamo.domain.user.repository.RefreshTokenRepository;
 import com.gdg.haksamo.domain.user.repository.UserRepository;
 import com.gdg.haksamo.global.exception.BusinessException;
 import com.gdg.haksamo.global.exception.ErrorCode;
@@ -31,6 +32,7 @@ public class AdminUserService {
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     /** 전체/권한별 계정 목록 조회. role이 null이면 전체. */
     @Transactional(readOnly = true)
@@ -74,6 +76,8 @@ public class AdminUserService {
         User user = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         user.changeRole(request.role(), request.managedRestaurantId());
+        // 권한이 바뀌면 기존 세션(refresh 토큰)을 무효화해 변경 전 권한으로 토큰을 재발급받지 못하게 한다.
+        refreshTokenRepository.deleteByUserId(targetUserId);
         return AdminUserResponse.from(user);
     }
 
@@ -90,6 +94,8 @@ public class AdminUserService {
         User user = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         user.resetPassword(passwordEncoder.encode(request.newPassword()));
+        // 비밀번호를 강제 재설정하면 기존 세션(refresh 토큰)을 무효화한다(계정 탈취 대응).
+        refreshTokenRepository.deleteByUserId(targetUserId);
     }
 
     /** 계정 삭제. 본인 계정은 삭제 불가(잠금 방지). */

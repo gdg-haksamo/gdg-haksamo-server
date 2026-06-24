@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"review_id", "userId"}))
+// userId의 물리 컬럼명은 user_id — 제약 컬럼명을 실제 컬럼(user_id)에 맞춰야 UNIQUE가 형성된다.
+@Table(uniqueConstraints = @UniqueConstraint(name = "uq_review_helpful_user", columnNames = {"review_id", "user_id"}))
 public class ReviewHelpful {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +22,7 @@ public class ReviewHelpful {
     @JoinColumn(name = "review_id")
     private Review review;
 
-    // TODO: User 엔티티 합류 시 @ManyToOne User user 로 교체
+    // User FK는 MVP에선 의도적으로 미연결(느슨한 결합). @ManyToOne User 전환은 후속 작업.
     private Long userId;
 
     private LocalDateTime createdAt;

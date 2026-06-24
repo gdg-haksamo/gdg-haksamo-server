@@ -48,6 +48,7 @@ public enum ErrorCode {
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "M002", "리뷰를 찾을 수 없습니다."),
     SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "M003", "메뉴 편성(스케줄)을 찾을 수 없습니다."),
     MENU_NAME_DUPLICATED(HttpStatus.CONFLICT, "M004", "같은 식당에 이미 같은 이름의 메뉴가 있습니다."),
+    REVIEW_HELPFUL_SELF_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "M005", "본인 리뷰에는 도움됐어요를 누를 수 없습니다."),
 
     // 이벤트
     EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "E001", "존재하지 않는 이벤트입니다."),

@@ -36,11 +36,11 @@
 ### 3) 회원가입 — 2단계(계정 생성)
 `POST /api/auth/signup` · 인증 X · **이메일 인증 완료 필수**
 ```json
-{ "email": "user@example.com", "password": "********", "nickname": "경대생", "department": "컴퓨터학부", "grade": 2 }
+{ "email": "user@example.com", "password": "********", "nickname": "경대생", "department": "컴퓨터학부", "restaurantId": 1, "keywords": ["MEAT", "SEAFOOD"] }
 ```
 - 201: `{ "userId": 1, "email": "...", "nickname": "..." }`
 - 400 `U003`(이메일 미인증) / 400 `C001`(검증 실패: 비밀번호 8자↑, 닉네임 2~8자) / 409 `U001`(중복)
-- 도메인 제한 없음(@knu 불요). 자주 가는 식당/선호 키워드(3단계)는 Restaurant/Preference 도메인 연동 후 추가 예정.
+- 도메인 제한 없음(@knu 불요). 학년(grade)은 받지 않음. 자주 가는 식당(`restaurantId`)·선호 키워드(`keywords`, 고정 칩 LIKED)는 가입 시 함께 수집한다.
 
 ### 4) 로그인
 `POST /api/auth/login` · 인증 X
@@ -118,7 +118,7 @@
 - **품절 토글** `PATCH /api/menus/schedules/{scheduleId}/sold-out` — `MenuSchedule.is_sold_out` 토글
 - **신메뉴 등록** `POST /api/menus` — `Menu` + 당일 `MenuSchedule` 생성
 - **이름·가격 수정** `PATCH /api/menus/{menuId}` — `Menu.name` / `Menu.price`
-- **리뷰 삭제(부적절 리뷰)** `DELETE /api/reviews/{reviewId}` — SUPER_ADMIN 전체, RESTAURANT_ADMIN은 자기 식당 메뉴의 리뷰만
+- **리뷰 삭제** `DELETE /api/reviews/{reviewId}` — 작성자 본인이면 허용, 본인이 아니면 관리자만(SUPER_ADMIN 전체, RESTAURANT_ADMIN은 자기 식당 메뉴의 리뷰만). 그 외 403 `A008`
 
 (경로·요청 형식은 채윤님 도메인 구현 시 확정 → 본 절에 반영)
 

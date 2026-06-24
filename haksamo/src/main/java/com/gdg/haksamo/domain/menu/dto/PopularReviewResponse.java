@@ -7,9 +7,11 @@ import java.time.LocalDateTime;
 @Schema(description = "인기 리뷰 (도움됐어요 많은 순)")
 public record PopularReviewResponse(
 
-        // TODO: User 엔티티 합류 시 작성자 닉네임 등으로 교체
-        @Schema(description = "작성자 ID (임시, User 합류 전까지)", example = "1")
+        @Schema(description = "작성자 ID (FE의 '내 리뷰' 판별용)", example = "1")
         Long userId,
+
+        @Schema(description = "작성자 닉네임", example = "학식러버")
+        String authorNickname,
 
         @Schema(description = "작성일시")
         LocalDateTime createdAt,

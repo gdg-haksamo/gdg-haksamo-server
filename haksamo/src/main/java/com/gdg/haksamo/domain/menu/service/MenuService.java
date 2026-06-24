@@ -14,6 +14,7 @@ import com.gdg.haksamo.domain.menu.repository.MenuScheduleRepository;
 import com.gdg.haksamo.domain.review.entity.Review;
 import com.gdg.haksamo.domain.review.repository.ReviewHelpfulRepository;
 import com.gdg.haksamo.domain.review.repository.ReviewRepository;
+import com.gdg.haksamo.domain.user.repository.UserRepository;
 import com.gdg.haksamo.global.exception.BusinessException;
 import com.gdg.haksamo.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,9 @@ public class MenuService {
     private final MenuScheduleRepository menuScheduleRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewHelpfulRepository reviewHelpfulRepository;
+    private final UserRepository userRepository;
+
+    private static final String UNKNOWN_AUTHOR = "알 수 없음";
 
     public MenusByMealTimeResponse getMenus(LocalDate date) {
         List<MenuSchedule> schedules = menuScheduleRepository.findByDate(date);
@@ -53,7 +57,11 @@ public class MenuService {
         }
 
         for (MenuSchedule schedule : schedules) {
-            grouped.get(schedule.getTime()).add(
+            List<MenuResponse> bucket = grouped.get(schedule.getTime());
+            if (bucket == null) {
+                continue; // time이 null/미매핑인 편성은 건너뛴다(하루 전체 응답 NPE 방지).
+            }
+            bucket.add(
                     new MenuResponse(
                             schedule.getMenu().getRestaurant().getName(),
                             schedule.getMenu().getName(),
@@ -117,6 +125,12 @@ public class MenuService {
             helpfulCountByReviewId.put((Long) row[0], (Long) row[1]);
         }
 
+        // 작성자 닉네임 배치 조회 (N+1 회피)
+        List<Long> userIds = reviews.stream().map(Review::getUserId).distinct().toList();
+        Map<Long, String> nicknameByUserId = new HashMap<>();
+        userRepository.findAllById(userIds)
+                .forEach(user -> nicknameByUserId.put(user.getId(), user.getNickname()));
+
         return reviews.stream()
                 .sorted(Comparator
                         .comparingLong((Review r) -> helpfulCountByReviewId.getOrDefault(r.getReviewId(), 0L))
@@ -125,6 +139,7 @@ public class MenuService {
                 .limit(3)
                 .map(review -> new PopularReviewResponse(
                         review.getUserId(),
+                        nicknameByUserId.getOrDefault(review.getUserId(), UNKNOWN_AUTHOR),
                         review.getCreatedAt(),
                         review.getRating(),
                         review.getContent(),

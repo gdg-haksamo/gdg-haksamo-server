@@ -10,8 +10,11 @@ public record ReviewResponse(
         @Schema(description = "리뷰 ID")
         Long reviewId,
 
-        @Schema(description = "작성자 ID")
+        @Schema(description = "작성자 ID (FE의 '내 리뷰' 판별용)")
         Long userId,
+
+        @Schema(description = "작성자 닉네임", example = "학식러버")
+        String authorNickname,
 
         @Schema(description = "식당명", example = "정보센터")
         String restaurant,
