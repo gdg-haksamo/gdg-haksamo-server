@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -31,12 +33,26 @@ public class MenuInfoEnrichmentService {
     private final MenuRepository menuRepository;
     private final MenuInfoGenerator generator;
     private final TransactionTemplate tx;
+    /** 청크 호출 사이 간격(ms). Gemini 분당 한도(무료 ~15RPM) 아래로 깔기 위함. 5000ms → 최대 ~12회/분. */
+    private final long throttleMs;
 
     public MenuInfoEnrichmentService(MenuRepository menuRepository, MenuInfoGenerator generator,
-            PlatformTransactionManager transactionManager) {
+            PlatformTransactionManager transactionManager,
+            @Value("${gemini.menu-info.throttle-ms:5000}") long throttleMs) {
         this.menuRepository = menuRepository;
         this.generator = generator;
         this.tx = new TransactionTemplate(transactionManager);
+        this.throttleMs = throttleMs;
+    }
+
+    /** 비동기 트리거 — 크롤/관리자 트리거가 블로킹되지 않게 백그라운드에서 실행한다. */
+    @Async
+    public void enrichMissingAsync() {
+        try {
+            enrichMissing();
+        } catch (Exception e) {
+            log.error("[메뉴정보] 비동기 생성 실패", e);
+        }
     }
 
     /** 한줄설명이 비어있는 메뉴를 청크로 나눠 생성·저장한다. 채워진 메뉴 수를 반환. */
@@ -51,6 +67,9 @@ public class MenuInfoEnrichmentService {
 
         int total = 0;
         for (int i = 0; i < ids.size(); i += CHUNK_SIZE) {
+            if (i > 0) {
+                throttle(); // 분당 한도 회피 — 청크 호출 사이 간격
+            }
             List<Long> chunk = ids.subList(i, Math.min(i + CHUNK_SIZE, ids.size()));
             try {
                 total += enrichChunk(chunk);
@@ -60,6 +79,17 @@ public class MenuInfoEnrichmentService {
         }
         log.info("[메뉴정보] 생성 완료 {}/{}건", total, ids.size());
         return total;
+    }
+
+    private void throttle() {
+        if (throttleMs <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(throttleMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private int enrichChunk(List<Long> ids) {

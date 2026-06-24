@@ -98,11 +98,8 @@ public class MenuCrawlerService {
             log.error("공식당 학생식당 메뉴 크롤링 실패", e);
         }
 
-        // 편성 저장 후, 신규 메뉴(설명·탄단지 비어있음)만 골라 AI로 정보 생성·저장. 크롤 본체와 분리.
-        try {
-            menuInfoEnrichmentService.enrichMissing();
-        } catch (Exception e) {
-            log.error("신규 메뉴 정보 생성 실패", e);
-        }
+        // 편성 저장 후, 신규 메뉴(설명·탄단지 비어있음)만 골라 AI로 정보 생성·저장.
+        // 비동기 — 크롤 응답을 막지 않고, 내부에서 분당 한도 아래로 throttle하며 진행.
+        menuInfoEnrichmentService.enrichMissingAsync();
     }
 }

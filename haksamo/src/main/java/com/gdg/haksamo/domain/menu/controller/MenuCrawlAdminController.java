@@ -31,11 +31,13 @@ public class MenuCrawlAdminController {
     @Operation(
             summary = "신규 메뉴 정보(한줄설명·탄단지) 생성",
             description = "설명·영양값이 비어있는 신규 메뉴만 골라 AI로 생성·저장합니다(이미 채워진 메뉴는 스킵). "
-                    + "크롤 시 자동 실행되지만, 수동으로도 트리거할 수 있습니다. 채운 메뉴 수를 반환합니다."
+                    + "분당 한도 회피를 위해 청크 사이 간격을 두고 백그라운드에서 비동기 실행합니다(즉시 반환). "
+                    + "진행/결과는 서버 로그로 확인하세요. 크롤 시에도 자동 실행됩니다."
     )
     @PostMapping("/enrich-info")
-    public ApiResponse<Integer> enrichInfo() {
-        return ApiResponse.success(menuInfoEnrichmentService.enrichMissing());
+    public ApiResponse<Void> enrichInfo() {
+        menuInfoEnrichmentService.enrichMissingAsync();
+        return ApiResponse.success();
     }
 
     @Operation(
