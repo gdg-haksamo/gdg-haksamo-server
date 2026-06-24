@@ -114,7 +114,13 @@ public class MenuAdminService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
         restaurantAdminGuard.requirePermission(userId, menu.getRestaurant().getRestaurantId());
 
-        if (request.name() != null) {
+        if (request.name() != null && !request.name().equals(menu.getName())) {
+            // 같은 식당 내 동일 이름 중복 방지 — UNIQUE(restaurant, name) 불변식(리뷰 정합성) 유지. 본인은 제외.
+            menuRepository.findByRestaurantAndName(menu.getRestaurant(), request.name())
+                    .filter(existing -> !existing.getMenuId().equals(menu.getMenuId()))
+                    .ifPresent(existing -> {
+                        throw new BusinessException(ErrorCode.MENU_NAME_DUPLICATED);
+                    });
             menu.setName(request.name());
         }
         if (request.price() != null) {
