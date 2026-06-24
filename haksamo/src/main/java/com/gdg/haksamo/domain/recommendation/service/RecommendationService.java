@@ -92,7 +92,17 @@ public class RecommendationService {
         }
         GeminiRecommendationRequest request = self().prepareUserRequest(userId, today, targetMeal);
         List<GeminiPick> picks = geminiClient.recommend(request); // ← 트랜잭션 밖 외부 호출
-        return self().storeRecommendation(userId, today, targetMeal, request, picks);
+        try {
+            return self().storeRecommendation(userId, today, targetMeal, request, picks);
+        } catch (DataIntegrityViolationException e) {
+            // 동시 첫 요청이 (user,date,meal) 유니크에 먼저 저장 → 저장 tx는 정상 롤백됨.
+            // 비트랜잭션인 여기서 그쪽 결과를 캐시로 다시 읽어 반환(같은 tx에서 잡으면 rollback-only 위험).
+            TodayRecommendationResponse winner = self().findCachedResponse(userId, today, targetMeal);
+            if (winner != null) {
+                return winner;
+            }
+            throw new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE);
+        }
     }
 
     /** 캐시된 추천이 있으면 응답으로 변환(지연 로딩 위해 트랜잭션 안에서), 없으면 null. */
@@ -138,7 +148,7 @@ public class RecommendationService {
 
         Recommendation recommendation = Recommendation.create(userId, date, meal);
         assembleMenus(recommendation, picks, indexed);
-        return toResponse(persist(recommendation, userId, date, meal));
+        return toResponse(persist(recommendation));
     }
 
     /** 끼니 추천 새로고침. Gemini 재호출 없이 다음 후보로 포인터 이동. */
@@ -184,7 +194,7 @@ public class RecommendationService {
 
         Recommendation recommendation = Recommendation.create(userId, date, meal);
         assembleMenus(recommendation, picks, candidates);
-        recommendation = persist(recommendation, userId, date, meal);
+        recommendation = persist(recommendation);
 
         List<AdhocRecommendation> result = new ArrayList<>();
         for (RecommendationMenu rm : recommendation.getMenus()) {
@@ -218,19 +228,30 @@ public class RecommendationService {
             }
             recommendation.addMenu(RecommendationMenu.of(menu, order++));
         }
+        // 모델이 중복·범위 밖 index를 섞어 4개를 못 채웠으면 남은 후보로 채운다(새로고침 후보 부족 방지).
+        // 채움분은 picks 뒤에 붙으므로 1순위(노출/푸시 대상)는 그대로 모델 선택을 유지한다.
+        for (Menu menu : indexed) {
+            if (recommendation.getMenus().size() >= SHORTLIST_SIZE) {
+                break;
+            }
+            if (menu == null || !usedMenuIds.add(menu.getMenuId())) {
+                continue;
+            }
+            recommendation.addMenu(RecommendationMenu.of(menu, order++));
+        }
     }
 
-    /** 추천 저장. 동시 첫 요청이 먼저 저장했으면((user,date,meal) 유니크 충돌) 그 행을 재사용한다. */
-    private Recommendation persist(Recommendation recommendation, Long userId, LocalDate date, MealTime meal) {
+    /**
+     * 추천 저장. 메뉴가 없으면 예외. (user,date,meal) 유니크 충돌 시 {@link DataIntegrityViolationException}이
+     * 호출 트랜잭션 밖으로 전파돼 그 트랜잭션은 정상 롤백되고, 충돌 복구(기존 행 재사용)는 비트랜잭션
+     * 오케스트레이터({@link #getToday})에서 한다. (같은 트랜잭션 안에서 잡으면 rollback-only가 돼
+     * 커밋 시 UnexpectedRollbackException 위험.)
+     */
+    private Recommendation persist(Recommendation recommendation) {
         if (recommendation.getMenus().isEmpty()) {
             throw new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE);
         }
-        try {
-            return recommendationRepository.saveAndFlush(recommendation);
-        } catch (DataIntegrityViolationException e) {
-            return recommendationRepository.findByUserIdAndDateAndMeal(userId, date, meal)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE));
-        }
+        return recommendationRepository.saveAndFlush(recommendation);
     }
 
     /** 해당 끼니 후보 메뉴: 품절 제외, menuId 기준 중복 제거(편성 순서 유지). */
