@@ -43,9 +43,7 @@ public class MyPageService {
         long helpfulReceivedCount = reviewHelpfulRepository.countHelpfulReceivedByUserId(userId);
         long activeEventCount = eventRepository.countActiveEvents(LocalDate.now());
 
-        FavoriteRestaurantResponse favoriteRestaurant = favoriteRestaurantRepository.findByUser(user)
-                .stream()
-                .findFirst()
+        FavoriteRestaurantResponse favoriteRestaurant = favoriteRestaurantRepository.findFirstByUserOrderByIdAsc(user)
                 .map(fr -> new FavoriteRestaurantResponse(
                         fr.getRestaurant().getRestaurantId(),
                         fr.getRestaurant().getName()

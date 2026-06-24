@@ -28,7 +28,7 @@ public class MyPageController {
         return ApiResponse.success(myPageService.getMyPage(userId));
     }
 
-    @Operation(summary = "자주 가는 식당 수정", description = "보낸 식당 ID 목록으로 전체 교체합니다.")
+    @Operation(summary = "자주 가는 식당 수정", description = "선호 식당 ID 1개를 설정합니다. null이면 선호 식당을 해제합니다.")
     @PatchMapping("/favorite-restaurants")
     public ApiResponse<Void> updateFavoriteRestaurants(
             @AuthenticationPrincipal Long userId,

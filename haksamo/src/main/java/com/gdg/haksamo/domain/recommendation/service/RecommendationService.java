@@ -277,12 +277,10 @@ public class RecommendationService {
                 .toList();
     }
 
-    /** 사용자의 선호 식당(단일). 없으면 null. */
+    /** 사용자의 선호 식당(단일). 없으면 null. 레거시 다중행 대비 id 오름차순 첫 행으로 결정론적 선택. */
     private Restaurant favoriteRestaurant(User user) {
-        return favoriteRestaurantRepository.findByUser(user).stream()
+        return favoriteRestaurantRepository.findFirstByUserOrderByIdAsc(user)
                 .map(FavoriteRestaurant::getRestaurant)
-                .filter(restaurant -> restaurant != null)
-                .findFirst()
                 .orElse(null);
     }
 
