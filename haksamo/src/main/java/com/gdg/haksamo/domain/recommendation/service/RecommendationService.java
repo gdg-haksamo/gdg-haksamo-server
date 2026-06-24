@@ -311,7 +311,7 @@ public class RecommendationService {
                 new NutritionResponse(menu.getCalories(), menu.getProtein(), menu.getCarb(), menu.getFat()),
                 recommendation.getDate(),
                 recommendation.getMeal(),
-                recommendation.getRefreshCount(),
+                recommendation.currentIndex(),
                 recommendation.candidateCount());
     }
 }

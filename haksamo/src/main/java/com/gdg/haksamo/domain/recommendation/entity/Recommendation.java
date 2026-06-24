@@ -82,13 +82,21 @@ public class Recommendation extends BaseTimeEntity {
         this.menus.add(menu);
     }
 
-    /** 현재(또는 새로고침 후) 사용자에게 보여줄 후보. 포인터를 후보 수로 모듈로 보정해 범위 밖 드리프트를 방어한다. */
-    public RecommendationMenu currentMenu() {
+    /**
+     * 현재 보여줄 후보의 위치(0-based). 포인터를 후보 수로 모듈로 보정해 범위 밖 드리프트(예: 후보 수가 줄어든
+     * 기존 행)를 방어한다. {@code currentMenu()}와 응답의 위치 값이 같은 기준을 쓰도록 단일 소스로 둔다.
+     */
+    public int currentIndex() {
         // 정상 경로(generate)에선 빈 shortlist를 막지만, 도메인 메서드 단독 안전성을 위해 방어한다.
         if (menus.isEmpty()) {
             throw new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE);
         }
-        return menus.get(refreshCount % menus.size());
+        return refreshCount % menus.size();
+    }
+
+    /** 현재(또는 새로고침 후) 사용자에게 보여줄 후보. */
+    public RecommendationMenu currentMenu() {
+        return menus.get(currentIndex());
     }
 
     /** 미리 받아둔 후보 수(순환 주기). */
@@ -98,6 +106,9 @@ public class Recommendation extends BaseTimeEntity {
 
     /** 새로고침: 다음 후보로 포인터 이동. 마지막 후보 다음은 첫 후보로 순환한다(한도·차단 없음). */
     public void refresh() {
+        if (menus.isEmpty()) {
+            throw new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE);
+        }
         this.refreshCount = (this.refreshCount + 1) % menus.size();
     }
 }
