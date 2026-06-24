@@ -1,6 +1,5 @@
 package com.gdg.haksamo.domain.recommendation.gemini;
 
-import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -18,16 +17,7 @@ public class StubGeminiClient implements GeminiClient {
 
     @Override
     public List<GeminiPick> recommend(GeminiRecommendationRequest request) {
-        // 선호 식당(★) 후보 먼저, 그 다음 나머지 — 후보 순서만 바꿔 우선순위를 흉내.
-        List<GeminiCandidate> ordered = new ArrayList<>();
-        request.candidates().stream().filter(GeminiCandidate::favorite).forEach(ordered::add);
-        request.candidates().stream().filter(c -> !c.favorite()).forEach(ordered::add);
-
-        int size = Math.min(request.count(), ordered.size());
-        List<GeminiPick> picks = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-            picks.add(new GeminiPick(ordered.get(i).index()));
-        }
+        List<GeminiPick> picks = DeterministicPicker.pick(request);
         log.info("[DEV-GEMINI] 스텁 추천 {}건 생성 (실제 호출 안 함)", picks.size());
         return picks;
     }

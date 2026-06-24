@@ -67,12 +67,16 @@ public class RestGeminiClient implements GeminiClient {
                     .body(body)
                     .retrieve()
                     .body(String.class);
-            return parse(raw);
-        } catch (BusinessException e) {
-            throw e;
+            List<GeminiPick> picks = parse(raw);
+            if (picks.isEmpty()) {
+                log.warn("Gemini 응답 picks 비어있음 — 결정론적 폴백으로 대체");
+                return DeterministicPicker.pick(request);
+            }
+            return picks;
         } catch (Exception e) {
-            log.error("Gemini 추천 호출 실패", e);
-            throw new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE);
+            // 한도초과(429)·네트워크·파싱 오류 등 → 추천이 끊기지 않게 결정론적 추천으로 폴백(시연 안전).
+            log.warn("Gemini 추천 호출 실패 — 결정론적 폴백으로 대체: {}", e.toString());
+            return DeterministicPicker.pick(request);
         }
     }
 
