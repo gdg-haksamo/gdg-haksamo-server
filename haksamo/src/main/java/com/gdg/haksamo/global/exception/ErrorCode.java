@@ -45,7 +45,10 @@ public enum ErrorCode {
 
     // 메뉴 / 리뷰
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "메뉴를 찾을 수 없습니다."),
-    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "M002", "리뷰를 찾을 수 없습니다.");
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "M002", "리뷰를 찾을 수 없습니다."),
+
+    // 이벤트
+    EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "E001", "존재하지 않는 이벤트입니다.");
 
     private final HttpStatus status;
     private final String code;
