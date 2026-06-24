@@ -1,5 +1,6 @@
 package com.gdg.haksamo.domain.user.service;
 
+import com.gdg.haksamo.domain.preference.PreferenceService;
 import com.gdg.haksamo.domain.user.dto.LoginRequest;
 import com.gdg.haksamo.domain.user.dto.SignUpRequest;
 import com.gdg.haksamo.domain.user.dto.SignUpResponse;
@@ -36,6 +37,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailVerificationService emailVerificationService;
+    private final PreferenceService preferenceService;
 
     @Transactional
     public SignUpResponse signUp(SignUpRequest request) {
@@ -50,6 +52,8 @@ public class AuthService {
                 .nickname(request.nickname())
                 .department(request.department())
                 .build());
+        // 가입 3단계 선호 키워드 저장(선택). 같은 트랜잭션이라 유저·키워드가 원자적으로 커밋된다.
+        preferenceService.replaceKeywords(user, request.keywords());
         emailVerificationService.consume(request.email()); // 인증 내역 제거(재사용 방지)
         return new SignUpResponse(user.getId(), user.getEmail(), user.getNickname());
     }

@@ -7,9 +7,8 @@ import com.gdg.haksamo.domain.mypage.dto.MyPageResponse;
 import com.gdg.haksamo.domain.mypage.dto.NotificationSettingsResponse;
 import com.gdg.haksamo.domain.mypage.dto.NotificationSettingsUpdateRequest;
 import com.gdg.haksamo.domain.mypage.dto.PreferencesUpdateRequest;
-import com.gdg.haksamo.domain.preference.Preference;
-import com.gdg.haksamo.domain.preference.PreferenceKeyword;
 import com.gdg.haksamo.domain.preference.PreferenceRepository;
+import com.gdg.haksamo.domain.preference.PreferenceService;
 import com.gdg.haksamo.domain.restaurant.FavoriteRestaurant;
 import com.gdg.haksamo.domain.restaurant.FavoriteRestaurantRepository;
 import com.gdg.haksamo.domain.restaurant.Restaurant;
@@ -35,6 +34,7 @@ public class MyPageService {
     private final ReviewHelpfulRepository reviewHelpfulRepository;
     private final FavoriteRestaurantRepository favoriteRestaurantRepository;
     private final PreferenceRepository preferenceRepository;
+    private final PreferenceService preferenceService;
     private final RestaurantRepository restaurantRepository;
     private final EventRepository eventRepository;
 
@@ -93,16 +93,7 @@ public class MyPageService {
     @Transactional
     public void updatePreferences(Long userId, PreferencesUpdateRequest request) {
         User user = getUser(userId);
-
-        preferenceRepository.deleteByUser(user);
-        for (PreferenceKeyword keyword : request.keywords()) {
-            preferenceRepository.save(
-                    Preference.builder()
-                            .user(user)
-                            .keyword(keyword)
-                            .build()
-            );
-        }
+        preferenceService.replaceKeywords(user, request.keywords());
     }
 
     @Transactional
