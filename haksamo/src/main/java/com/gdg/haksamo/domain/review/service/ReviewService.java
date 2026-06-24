@@ -9,6 +9,9 @@ import com.gdg.haksamo.domain.review.entity.Review;
 import com.gdg.haksamo.domain.review.entity.ReviewHelpful;
 import com.gdg.haksamo.domain.review.repository.ReviewHelpfulRepository;
 import com.gdg.haksamo.domain.review.repository.ReviewRepository;
+import com.gdg.haksamo.domain.user.entity.Role;
+import com.gdg.haksamo.domain.user.entity.User;
+import com.gdg.haksamo.domain.user.repository.UserRepository;
 import com.gdg.haksamo.global.exception.BusinessException;
 import com.gdg.haksamo.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ReviewHelpfulRepository reviewHelpfulRepository;
     private final MenuRepository menuRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public ReviewResponse createReview(Long menuId, Long userId, ReviewRequest request) {
@@ -89,6 +93,22 @@ public class ReviewService {
                                         .build()
                         )
                 );
+    }
+
+    @Transactional
+    public void deleteReview(Long userId, Long reviewId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getRole() == Role.USER) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+        reviewHelpfulRepository.deleteByReview_ReviewId(reviewId);
+        reviewRepository.delete(review);
     }
 
     private ReviewResponse toResponse(Review review) {

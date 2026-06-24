@@ -18,4 +18,6 @@ public interface ReviewHelpfulRepository extends JpaRepository<ReviewHelpful, Lo
 
     @Query("select count(rh) from ReviewHelpful rh where rh.review.userId = :userId")
     long countHelpfulReceivedByUserId(@Param("userId") Long userId);
+
+    void deleteByReview_ReviewId(Long reviewId);
 }
