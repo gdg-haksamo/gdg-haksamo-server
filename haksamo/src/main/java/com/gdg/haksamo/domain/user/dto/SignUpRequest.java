@@ -11,8 +11,7 @@ import java.util.List;
  * 회원가입 요청.
  * 이메일 도메인 제한 없음 — 형식(@Email)과 중복만 검증.
  * 학년(grade)은 회원가입에서 입력받지 않기로 결정 → 필드 제거.
- * 선호 키워드(가입 3단계)는 선택 입력 — null/빈 목록이면 저장하지 않는다.
- * 자주 가는 식당(2단계)은 Restaurant 도메인 연동 후 추가 예정.
+ * 자주 가는 식당(2단계)·선호 키워드(3단계)는 선택 입력 — null/빈 목록이면 저장하지 않는다.
  */
 public record SignUpRequest(
         @NotBlank(message = "이메일을 입력해주세요.")
@@ -29,6 +28,9 @@ public record SignUpRequest(
         String nickname,
 
         String department,
+
+        // 가입 2단계 자주 가는 식당 ID(선택). 미입력 시 null/빈 목록 허용. 중복은 저장 시 정리됨.
+        List<Long> restaurantIds,
 
         // 가입 3단계 선호 키워드(선택). 미입력 시 null/빈 목록 허용. 중복은 저장 시 정리됨.
         @Size(max = PreferenceKeyword.MAX_SELECTION, message = "선호 키워드는 최대 {max}개까지 선택할 수 있습니다.")
