@@ -8,11 +8,6 @@ import jakarta.validation.constraints.NotNull;
 @Schema(description = "리뷰 작성 요청")
 public record ReviewRequest(
 
-        // TODO: User 엔티티/JWT 합류 시 제거하고 SecurityContext에서 추출
-        @Schema(description = "작성자 ID (임시, JWT 합류 전까지 직접 전달)", example = "1")
-        @NotNull
-        Long userId,
-
         @Schema(description = "별점 (1~5)", example = "5")
         @NotNull
         @Min(1)

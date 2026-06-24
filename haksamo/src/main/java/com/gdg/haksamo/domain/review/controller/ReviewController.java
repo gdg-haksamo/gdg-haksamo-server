@@ -6,10 +6,10 @@ import com.gdg.haksamo.domain.review.dto.ReviewResponse;
 import com.gdg.haksamo.domain.review.service.ReviewService;
 import com.gdg.haksamo.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,9 +25,10 @@ public class ReviewController {
     @PostMapping("/menus/{menuId}/reviews")
     public ApiResponse<ReviewResponse> createReview(
             @PathVariable Long menuId,
+            @AuthenticationPrincipal Long userId,
             @Valid @RequestBody ReviewRequest request
     ) {
-        return ApiResponse.success(reviewService.createReview(menuId, request));
+        return ApiResponse.success(reviewService.createReview(menuId, userId, request));
     }
 
     @Operation(summary = "메뉴 리뷰 목록 조회", description = "메뉴의 리뷰 목록을 조회합니다.")
@@ -46,8 +47,7 @@ public class ReviewController {
     @PostMapping("/reviews/{reviewId}/helpful")
     public ApiResponse<Void> toggleHelpful(
             @PathVariable Long reviewId,
-            @Parameter(description = "요청자 ID (임시, JWT 합류 전까지 직접 전달)", example = "1")
-            @RequestParam Long userId
+            @AuthenticationPrincipal Long userId
     ) {
         reviewService.toggleHelpful(reviewId, userId);
         return ApiResponse.success();

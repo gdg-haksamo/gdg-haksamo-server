@@ -27,14 +27,14 @@ public class ReviewService {
     private final MenuRepository menuRepository;
 
     @Transactional
-    public ReviewResponse createReview(Long menuId, ReviewRequest request) {
+    public ReviewResponse createReview(Long menuId, Long userId, ReviewRequest request) {
         Menu menu = menuRepository.findById(menuId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
         Review review = reviewRepository.save(
                 Review.builder()
                         .menu(menu)
-                        .userId(request.userId())
+                        .userId(userId)
                         .rating(request.rating())
                         .content(request.content())
                         .build()
