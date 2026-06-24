@@ -11,6 +11,8 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByMenu(Menu menu);
 
+    List<Review> findAllByOrderByCreatedAtDesc();
+
     long countByMenu(Menu menu);
 
     @Query("select r.rating, count(r) from Review r where r.menu = :menu group by r.rating")
