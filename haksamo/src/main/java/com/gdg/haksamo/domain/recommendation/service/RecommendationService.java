@@ -53,7 +53,6 @@ public class RecommendationService {
     /** 한국 시간 기준(서버 타임존이 UTC여도 날짜·끼니 경계를 KST로 맞춘다) */
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int SHORTLIST_SIZE = 4;
-    private static final int DAILY_REFRESH_LIMIT = 3;
 
     private final RecommendationRepository recommendationRepository;
     private final MenuScheduleRepository menuScheduleRepository;
@@ -151,7 +150,7 @@ public class RecommendationService {
         return toResponse(persist(recommendation));
     }
 
-    /** 끼니 추천 새로고침. Gemini 재호출 없이 다음 후보로 포인터 이동. */
+    /** 끼니 추천 새로고침. Gemini 재호출 없이 다음 후보로 포인터 이동(마지막 다음은 첫 후보로 순환, 한도 없음). */
     @Transactional
     public TodayRecommendationResponse refresh(Long userId, MealTime meal) {
         MealTime targetMeal = resolveMeal(meal);
@@ -160,9 +159,6 @@ public class RecommendationService {
                 .findByUserIdAndDateAndMeal(userId, today, targetMeal)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RECOMMENDATION_NOT_FOUND));
 
-        if (!recommendation.canRefresh(DAILY_REFRESH_LIMIT)) {
-            throw new BusinessException(ErrorCode.RECOMMENDATION_REFRESH_LIMIT);
-        }
         recommendation.refresh();
         return toResponse(recommendation);
     }
@@ -304,7 +300,6 @@ public class RecommendationService {
         RecommendationMenu current = recommendation.currentMenu();
         Menu menu = current.getMenu();
         String restaurant = (menu.getRestaurant() != null) ? menu.getRestaurant().getName() : null;
-        int remaining = recommendation.maxRefresh(DAILY_REFRESH_LIMIT) - recommendation.getRefreshCount();
         return new TodayRecommendationResponse(
                 menu.getMenuId(),
                 menu.getName(),
@@ -316,7 +311,7 @@ public class RecommendationService {
                 new NutritionResponse(menu.getCalories(), menu.getProtein(), menu.getCarb(), menu.getFat()),
                 recommendation.getDate(),
                 recommendation.getMeal(),
-                recommendation.getRefreshCount(),
-                Math.max(remaining, 0));
+                recommendation.currentIndex(),
+                recommendation.candidateCount());
     }
 }

@@ -39,7 +39,7 @@ public class RecommendationController {
     }
 
     @Operation(summary = "끼니 AI 추천 새로고침",
-            description = "미리 받아둔 다음 후보를 반환한다(Gemini 재호출 없음). 하루 끼니별 최대 3회, 초과 시 429.")
+            description = "미리 받아둔 다음 후보를 반환한다(Gemini 재호출 없음). 마지막 후보 다음은 첫 후보로 순환하며, 횟수 제한이 없다.")
     @PostMapping("/today/refresh")
     public ResponseEntity<ApiResponse<TodayRecommendationResponse>> refresh(
             @AuthenticationPrincipal Long userId,

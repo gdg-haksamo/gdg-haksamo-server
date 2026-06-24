@@ -33,7 +33,7 @@ public class MenuInfoEnrichmentService {
     private final MenuRepository menuRepository;
     private final MenuInfoGenerator generator;
     private final TransactionTemplate tx;
-    /** 청크 호출 사이 간격(ms). Gemini 분당 한도(무료 ~15RPM) 아래로 깔기 위함. 5000ms → 최대 ~12회/분. */
+    /** 청크 호출 사이 간격(ms). Gemini 분당 한도(gemini-3.1-flash-lite free 15RPM) 아래로 깔기 위함. 5000ms → 최대 ~12회/분. */
     private final long throttleMs;
 
     public MenuInfoEnrichmentService(MenuRepository menuRepository, MenuInfoGenerator generator,

@@ -5,7 +5,7 @@ import com.gdg.haksamo.domain.menu.entity.MealTime;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 
-@Schema(description = "오늘의 AI 추천 응답 (현재 보여줄 추천 1건 + 새로고침 잔여)")
+@Schema(description = "오늘의 AI 추천 응답 (현재 보여줄 추천 1건 + 순환 위치 정보)")
 public record TodayRecommendationResponse(
 
         @Schema(description = "메뉴 ID", example = "12")
@@ -38,10 +38,10 @@ public record TodayRecommendationResponse(
         @Schema(description = "끼니(BREAKFAST/LUNCH/DINNER)", example = "LUNCH")
         MealTime meal,
 
-        @Schema(description = "오늘 사용한 새로고침 횟수", example = "0")
+        @Schema(description = "현재 보여주는 후보의 위치(0-based, 새로고침마다 순환)", example = "0")
         int refreshCount,
 
-        @Schema(description = "남은 새로고침 가능 횟수(최대 3, 후보 수에 따라 줄 수 있음)", example = "3")
-        int refreshRemaining
+        @Schema(description = "순환하는 추천 후보 총 개수", example = "4")
+        int totalCount
 ) {
 }
