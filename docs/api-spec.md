@@ -118,7 +118,7 @@
 - **품절 토글** `PATCH /api/menus/schedules/{scheduleId}/sold-out` — `MenuSchedule.is_sold_out` 토글
 - **신메뉴 등록** `POST /api/menus` — `Menu` + 당일 `MenuSchedule` 생성
 - **이름·가격 수정** `PATCH /api/menus/{menuId}` — `Menu.name` / `Menu.price`
-- **리뷰 삭제(부적절 리뷰)** `DELETE /api/reviews/{reviewId}` — SUPER_ADMIN 전체, RESTAURANT_ADMIN은 자기 식당 메뉴의 리뷰만
+- **리뷰 삭제** `DELETE /api/reviews/{reviewId}` — 작성자 본인이면 허용, 본인이 아니면 관리자만(SUPER_ADMIN 전체, RESTAURANT_ADMIN은 자기 식당 메뉴의 리뷰만). 그 외 403 `A008`
 
 (경로·요청 형식은 채윤님 도메인 구현 시 확정 → 본 절에 반영)
 

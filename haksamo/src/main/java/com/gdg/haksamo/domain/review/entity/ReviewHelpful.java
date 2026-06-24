@@ -21,7 +21,7 @@ public class ReviewHelpful {
     @JoinColumn(name = "review_id")
     private Review review;
 
-    // TODO: User 엔티티 합류 시 @ManyToOne User user 로 교체
+    // User FK는 MVP에선 의도적으로 미연결(느슨한 결합). @ManyToOne User 전환은 후속 작업.
     private Long userId;
 
     private LocalDateTime createdAt;

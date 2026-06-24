@@ -59,7 +59,7 @@ public class ReviewController {
         return ApiResponse.success();
     }
 
-    @Operation(summary = "관리자 리뷰 삭제", description = "운영팀(SUPER_ADMIN)은 전체, 식당 운영자(RESTAURANT_ADMIN)는 본인 담당 식당 메뉴의 리뷰만 삭제합니다. 도움됐어요 기록도 함께 삭제됩니다.")
+    @Operation(summary = "리뷰 삭제", description = "작성자 본인이면 삭제할 수 있습니다. 본인이 아니면 관리자 권한이 필요합니다(SUPER_ADMIN 전체 / RESTAURANT_ADMIN 본인 담당 식당 메뉴만). 도움됐어요 기록도 함께 삭제됩니다.")
     @DeleteMapping("/api/reviews/{reviewId}")
     public ApiResponse<Void> deleteReview(
             @PathVariable Long reviewId,
