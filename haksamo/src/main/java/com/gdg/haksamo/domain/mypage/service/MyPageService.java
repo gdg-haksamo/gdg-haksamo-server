@@ -59,6 +59,8 @@ public class MyPageService {
         return new MyPageResponse(
                 user.getNickname(),
                 user.getDepartment(),
+                user.getRole(),
+                user.getManagedRestaurantId(),
                 reviewCount,
                 helpfulReceivedCount,
                 activeEventCount,
