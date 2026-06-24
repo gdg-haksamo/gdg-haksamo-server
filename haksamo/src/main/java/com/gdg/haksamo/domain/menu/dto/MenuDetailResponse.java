@@ -19,6 +19,9 @@ public record MenuDetailResponse(
         @Schema(description = "운영시간", example = "11:00~13:30")
         String operatingTime,
 
+        @Schema(description = "품절 여부", example = "false")
+        boolean soldOut,
+
         @Schema(description = "메뉴 설명 (AI 생성, 미구현 시 null)")
         String description,
 

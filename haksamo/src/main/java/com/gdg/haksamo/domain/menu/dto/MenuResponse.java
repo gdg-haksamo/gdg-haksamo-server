@@ -15,6 +15,9 @@ public record MenuResponse(
         Integer price,
 
         @Schema(description = "평균 별점 (리뷰 없으면 null)", example = "4.3")
-        Double averageRating
+        Double averageRating,
+
+        @Schema(description = "품절 여부", example = "false")
+        boolean soldOut
 ) {
 }
