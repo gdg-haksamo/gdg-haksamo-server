@@ -57,7 +57,11 @@ public class MenuService {
         }
 
         for (MenuSchedule schedule : schedules) {
-            grouped.get(schedule.getTime()).add(
+            List<MenuResponse> bucket = grouped.get(schedule.getTime());
+            if (bucket == null) {
+                continue; // time이 null/미매핑인 편성은 건너뛴다(하루 전체 응답 NPE 방지).
+            }
+            bucket.add(
                     new MenuResponse(
                             schedule.getMenu().getRestaurant().getName(),
                             schedule.getMenu().getName(),
