@@ -58,7 +58,7 @@ public class Recommendation extends BaseTimeEntity {
     @Column(nullable = false)
     private MealTime meal;
 
-    /** 오늘 사용한 새로고침 횟수이자 현재 보여줄 후보의 인덱스(0-based). */
+    /** 현재 보여줄 후보의 위치(0-based 포인터). 새로고침마다 후보 수 기준으로 순환한다. */
     @Column(name = "refresh_count", nullable = false)
     private int refreshCount;
 
@@ -82,26 +82,22 @@ public class Recommendation extends BaseTimeEntity {
         this.menus.add(menu);
     }
 
-    /** 현재(또는 새로고침 후) 사용자에게 보여줄 후보. shortlist 범위를 벗어나지 않도록 보정한다. */
+    /** 현재(또는 새로고침 후) 사용자에게 보여줄 후보. 포인터를 후보 수로 모듈로 보정해 범위 밖 드리프트를 방어한다. */
     public RecommendationMenu currentMenu() {
         // 정상 경로(generate)에선 빈 shortlist를 막지만, 도메인 메서드 단독 안전성을 위해 방어한다.
         if (menus.isEmpty()) {
             throw new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE);
         }
-        int index = Math.min(refreshCount, menus.size() - 1);
-        return menus.get(index);
+        return menus.get(refreshCount % menus.size());
     }
 
-    /** 오늘 가능한 새로고침 최대 횟수. 미리 받아둔 후보 수와 하루 한도 중 작은 값. */
-    public int maxRefresh(int dailyLimit) {
-        return Math.min(dailyLimit, menus.size() - 1);
+    /** 미리 받아둔 후보 수(순환 주기). */
+    public int candidateCount() {
+        return menus.size();
     }
 
-    public boolean canRefresh(int dailyLimit) {
-        return refreshCount < maxRefresh(dailyLimit);
-    }
-
+    /** 새로고침: 다음 후보로 포인터 이동. 마지막 후보 다음은 첫 후보로 순환한다(한도·차단 없음). */
     public void refresh() {
-        this.refreshCount++;
+        this.refreshCount = (this.refreshCount + 1) % menus.size();
     }
 }
