@@ -20,7 +20,9 @@ jwt:
 # prod는 RestGeminiClient가 실제 호출 → GEMINI_API_KEY 필수(Generative Language API 키, GCP 서비스계정 불필요).
 gemini:
   api-key: ${GEMINI_API_KEY:}
-  model: ${GEMINI_MODEL:gemini-1.5-flash}
+  # gemini-1.5-flash는 v1beta에서 종료(404)되어 gemini-3.1-flash-lite로 교체(#79).
+  # 신세대 lite — free tier 15 RPM / 1,500 RPD(최고)로 본 프로젝트 페이싱에 부합. ListModels로 stable 확인.
+  model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
   base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
   # 분당 호출 한도. 호출을 이 값 이하로 페이싱해 429를 원천 차단한다.
   # free tier 15 RPM보다 낮은 13을 기본값으로 둬 경계 오차에 안전 마진을 둔다. 유료 티어 시 상향.
