@@ -4,11 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gdg.haksamo.global.exception.BusinessException;
 import com.gdg.haksamo.global.exception.ErrorCode;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
+import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -35,7 +38,14 @@ public class RestGeminiClient implements GeminiClient {
             @Value("${gemini.base-url}") String baseUrl,
             @Value("${gemini.api-key}") String apiKey,
             @Value("${gemini.model}") String model) {
-        this.restClient = RestClient.builder().baseUrl(baseUrl).build();
+        // Gemini 응답 지연이 요청 스레드를 오래 묶지 않도록 connect/read 타임아웃을 명시한다.
+        ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.defaults()
+                .withConnectTimeout(Duration.ofSeconds(3))
+                .withReadTimeout(Duration.ofSeconds(10));
+        this.restClient = RestClient.builder()
+                .baseUrl(baseUrl)
+                .requestFactory(ClientHttpRequestFactoryBuilder.detect().build(settings))
+                .build();
         this.objectMapper = objectMapper;
         this.apiKey = apiKey;
         this.model = model;
@@ -51,7 +61,9 @@ public class RestGeminiClient implements GeminiClient {
                         "temperature", 0.9));
         try {
             String raw = restClient.post()
-                    .uri("/models/{model}:generateContent?key={key}", model, apiKey)
+                    // API 키는 query string(로그·프록시에 노출 위험) 대신 헤더로 전달한다.
+                    .uri("/models/{model}:generateContent", model)
+                    .header("x-goog-api-key", apiKey)
                     .body(body)
                     .retrieve()
                     .body(String.class);

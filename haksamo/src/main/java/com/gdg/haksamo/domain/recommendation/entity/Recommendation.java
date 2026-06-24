@@ -1,6 +1,8 @@
 package com.gdg.haksamo.domain.recommendation.entity;
 
 import com.gdg.haksamo.global.common.BaseTimeEntity;
+import com.gdg.haksamo.global.exception.BusinessException;
+import com.gdg.haksamo.global.exception.ErrorCode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -73,6 +75,10 @@ public class Recommendation extends BaseTimeEntity {
 
     /** 현재(또는 새로고침 후) 사용자에게 보여줄 후보. shortlist 범위를 벗어나지 않도록 보정한다. */
     public RecommendationMenu currentMenu() {
+        // 정상 경로(generate)에선 빈 shortlist를 막지만, 도메인 메서드 단독 안전성을 위해 방어한다.
+        if (menus.isEmpty()) {
+            throw new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE);
+        }
         int index = Math.min(refreshCount, menus.size() - 1);
         return menus.get(index);
     }
