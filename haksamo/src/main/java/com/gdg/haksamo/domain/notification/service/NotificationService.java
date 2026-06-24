@@ -13,7 +13,6 @@ import com.gdg.haksamo.global.exception.ErrorCode;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 알림(FCM 푸시) 발송.
@@ -21,6 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>추천 푸시는 <b>추천을 먼저 생성(또는 캐시 조회)한 뒤에만</b> 발송한다
  * ({@link RecommendationService#getToday}를 동기 호출). 따라서 "추천이 아직 없어서 빈 푸시가 나가는"
  * 상황은 발생하지 않는다 — 푸시 전 추천 존재가 보장된다.
+ *
+ * <p>이 메서드는 일부러 트랜잭션으로 감싸지 않는다. 외부 호출(Gemini 생성·FCM 발송)을 하나의 DB
+ * 트랜잭션 안에 넣으면 외부 응답 지연 동안 커넥션을 점유해 풀이 고갈된다. 대신 각 단계가 자체 트랜잭션을
+ * 갖는다: {@code getToday()}(@Transactional), {@code repository.save()}(Spring Data 자체 트랜잭션).
  */
 @Service
 @RequiredArgsConstructor
@@ -37,7 +40,6 @@ public class NotificationService {
      * 대상 사용자의 오늘 추천을 생성(또는 캐시)한 뒤 즉시 FCM 푸시한다. (관리자 트리거)
      * 추천 내용을 응답에 함께 담아 관리자가 발송 내용을 확인할 수 있게 한다.
      */
-    @Transactional
     public RecommendationPushResponse pushTodayRecommendation(Long targetUserId) {
         User user = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
