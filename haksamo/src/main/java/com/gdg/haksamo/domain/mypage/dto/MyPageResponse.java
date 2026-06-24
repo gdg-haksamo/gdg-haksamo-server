@@ -1,5 +1,6 @@
 package com.gdg.haksamo.domain.mypage.dto;
 
+import com.gdg.haksamo.domain.user.entity.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -12,6 +13,12 @@ public record MyPageResponse(
 
         @Schema(description = "학과", example = "컴퓨터학부")
         String department,
+
+        @Schema(description = "사용자 권한 (FE 관리자 페이지 분기용)", example = "USER")
+        Role role,
+
+        @Schema(description = "관리하는 식당 id (RESTAURANT_ADMIN만 값, USER/SUPER_ADMIN은 null)", example = "5")
+        Long managedRestaurantId,
 
         @Schema(description = "작성한 리뷰 수", example = "5")
         long reviewCount,
