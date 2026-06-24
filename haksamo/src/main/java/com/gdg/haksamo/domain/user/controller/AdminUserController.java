@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -42,47 +42,46 @@ public class AdminUserController {
 
     @Operation(summary = "계정 목록 조회", description = "role 파라미터로 권한별 필터링(미지정 시 전체).")
     @GetMapping
-    public ResponseEntity<ApiResponse<AdminUserListResponse>> getUsers(
+    public ApiResponse<AdminUserListResponse> getUsers(
             @RequestParam(required = false) Role role,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(ApiResponse.success(adminUserService.getUsers(role, pageable)));
+        return ApiResponse.success(adminUserService.getUsers(role, pageable));
     }
 
     @Operation(summary = "식당 운영자 계정 발급", description = "RESTAURANT_ADMIN 계정을 만들고 담당 식당을 지정한다.")
     @PostMapping("/restaurant-admin")
-    public ResponseEntity<ApiResponse<AdminUserResponse>> createRestaurantAdmin(
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<AdminUserResponse> createRestaurantAdmin(
             @Valid @RequestBody CreateRestaurantAdminRequest request) {
-        AdminUserResponse created = adminUserService.createRestaurantAdmin(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(created));
+        return ApiResponse.success(adminUserService.createRestaurantAdmin(request));
     }
 
     @Operation(summary = "권한/담당 식당 변경", description = "사용자의 role과 담당 식당을 변경한다(본인 계정 제외).")
     @PatchMapping("/{userId}/role")
-    public ResponseEntity<ApiResponse<AdminUserResponse>> updateRole(
+    public ApiResponse<AdminUserResponse> updateRole(
             @AuthenticationPrincipal Long actorUserId,
             @PathVariable Long userId,
             @Valid @RequestBody UpdateUserRoleRequest request) {
-        AdminUserResponse updated = adminUserService.updateRole(actorUserId, userId, request);
-        return ResponseEntity.ok(ApiResponse.success(updated));
+        return ApiResponse.success(adminUserService.updateRole(actorUserId, userId, request));
     }
 
     @Operation(summary = "비밀번호 재설정", description = "운영자 분실 대응 등으로 비밀번호를 강제 재설정한다.")
     @PatchMapping("/{userId}/password")
-    public ResponseEntity<ApiResponse<Void>> resetPassword(
+    public ApiResponse<Void> resetPassword(
             @PathVariable Long userId,
             @Valid @RequestBody ResetPasswordRequest request) {
         adminUserService.resetPassword(userId, request);
-        return ResponseEntity.ok(ApiResponse.success());
+        return ApiResponse.success();
     }
 
     @Operation(summary = "계정 삭제", description = "사용자 계정을 삭제한다(본인 계정 제외).")
     @DeleteMapping("/{userId}")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(
+    public ApiResponse<Void> deleteUser(
             @AuthenticationPrincipal Long actorUserId,
             @PathVariable Long userId) {
         adminUserService.deleteUser(actorUserId, userId);
-        return ResponseEntity.ok(ApiResponse.success());
+        return ApiResponse.success();
     }
 }

@@ -24,6 +24,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -44,25 +45,25 @@ public class AuthController {
 
     @Operation(summary = "이메일 인증번호 발송", description = "회원가입 1단계. 6자리 코드 발송(유효 3분). dev는 서버 로그로 출력.")
     @PostMapping("/email/send-code")
-    public ResponseEntity<ApiResponse<Void>> sendCode(@Valid @RequestBody SendCodeRequest request) {
+    public ApiResponse<Void> sendCode(@Valid @RequestBody SendCodeRequest request) {
         emailVerificationService.sendCode(request.email());
-        return ResponseEntity.ok(ApiResponse.success());
+        return ApiResponse.success();
     }
 
     @Operation(summary = "이메일 인증번호 검증", description = "코드 일치 시 인증 완료(이후 30분 내 회원가입 가능). 시도 5회 제한.")
     @PostMapping("/email/verify-code")
-    public ResponseEntity<ApiResponse<Void>> verifyCode(@Valid @RequestBody VerifyCodeRequest request) {
+    public ApiResponse<Void> verifyCode(@Valid @RequestBody VerifyCodeRequest request) {
         emailVerificationService.verifyCode(request.email(), request.code());
-        return ResponseEntity.ok(ApiResponse.success());
+        return ApiResponse.success();
     }
 
     // === 회원가입 2단계 이후: 계정 생성 (이메일 인증 완료 필수) ===
 
     @Operation(summary = "회원가입", description = "이메일 인증 완료 필수. 도메인 제한 없음. 비밀번호 8~72자, 닉네임 2~8자.")
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<SignUpResponse>> signUp(@Valid @RequestBody SignUpRequest request) {
-        SignUpResponse response = authService.signUp(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<SignUpResponse> signUp(@Valid @RequestBody SignUpRequest request) {
+        return ApiResponse.success(authService.signUp(request));
     }
 
     @Operation(summary = "로그인", description = "Access Token은 본문, Refresh Token은 httpOnly 쿠키로 발급.")
