@@ -6,10 +6,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
 
 /**
  * 메뉴 크롤 수동 트리거 (운영팀 SUPER_ADMIN 전용).
@@ -32,9 +35,12 @@ public class MenuCrawlAdminController {
     @PostMapping("/crawl")
     public ApiResponse<Void> crawl(
             @Parameter(description = "가져올 주의 날짜 (yyyy-MM-dd, 생략 시 현재 주)", example = "2026-06-15")
-            @RequestParam(required = false) String selDate
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate selDate
     ) {
-        menuCrawlerService.crawl(selDate);
+        // LocalDate 바인딩으로 형식 검증을 위임 — 잘못된 날짜는 Spring이 400(C001)으로 거부.
+        // (오입력으로 빈 편성표가 파싱돼 식당 스케줄이 wipe 후 미삽입되는 상황 방지)
+        menuCrawlerService.crawl(selDate == null ? null : selDate.toString());
         return ApiResponse.success();
     }
 }
