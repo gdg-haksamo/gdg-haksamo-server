@@ -157,6 +157,18 @@ public class User extends BaseTimeEntity {
         return this.role == Role.SUPER_ADMIN;
     }
 
+    /** 끼니별 추천 알림 수신 여부 — 마스터 토글 AND 해당 끼니 토글. (스케줄러 발송 대상 판정) */
+    public boolean isMealNotificationEnabled(com.gdg.haksamo.domain.menu.entity.MealTime meal) {
+        if (!pushNotificationEnabled) {
+            return false;
+        }
+        return switch (meal) {
+            case BREAKFAST -> notificationBreakfastEnabled;
+            case LUNCH -> notificationLunchEnabled;
+            case DINNER -> notificationDinnerEnabled;
+        };
+    }
+
     public boolean canManageRestaurant(Long restaurantId) {
         if (this.role == Role.SUPER_ADMIN) {
             return true; // 운영팀은 모든 식당 관리

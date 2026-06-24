@@ -30,6 +30,6 @@ public class AdminNotificationController {
     @PostMapping("/recommendation-push")
     public ApiResponse<RecommendationPushResponse> pushRecommendation(
             @Valid @RequestBody RecommendationPushRequest request) {
-        return ApiResponse.success(notificationService.pushTodayRecommendation(request.userId()));
+        return ApiResponse.success(notificationService.pushTodayRecommendation(request.userId(), request.meal()));
     }
 }

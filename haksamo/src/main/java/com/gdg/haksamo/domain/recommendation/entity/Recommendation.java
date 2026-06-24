@@ -1,11 +1,14 @@
 package com.gdg.haksamo.domain.recommendation.entity;
 
+import com.gdg.haksamo.domain.menu.entity.MealTime;
 import com.gdg.haksamo.global.common.BaseTimeEntity;
 import com.gdg.haksamo.global.exception.BusinessException;
 import com.gdg.haksamo.global.exception.ErrorCode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,8 +37,8 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "Recommendation",
         uniqueConstraints = @UniqueConstraint(
-                name = "uq_recommendation_user_date",
-                columnNames = {"user_id", "date"}))
+                name = "uq_recommendation_user_date_meal",
+                columnNames = {"user_id", "date", "meal"}))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Recommendation extends BaseTimeEntity {
 
@@ -50,6 +53,11 @@ public class Recommendation extends BaseTimeEntity {
     @Column(nullable = false)
     private LocalDate date;
 
+    /** 끼니(아침/점심/저녁). (user_id, date, meal) 당 1행. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MealTime meal;
+
     /** 오늘 사용한 새로고침 횟수이자 현재 보여줄 후보의 인덱스(0-based). */
     @Column(name = "refresh_count", nullable = false)
     private int refreshCount;
@@ -58,14 +66,15 @@ public class Recommendation extends BaseTimeEntity {
     @OrderBy("displayOrder ASC")
     private List<RecommendationMenu> menus = new ArrayList<>();
 
-    private Recommendation(Long userId, LocalDate date) {
+    private Recommendation(Long userId, LocalDate date, MealTime meal) {
         this.userId = userId;
         this.date = date;
+        this.meal = meal;
         this.refreshCount = 0;
     }
 
-    public static Recommendation create(Long userId, LocalDate date) {
-        return new Recommendation(userId, date);
+    public static Recommendation create(Long userId, LocalDate date, MealTime meal) {
+        return new Recommendation(userId, date, meal);
     }
 
     public void addMenu(RecommendationMenu menu) {
