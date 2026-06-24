@@ -93,8 +93,8 @@ public class NotificationService {
                 ? List.of(request.favoriteRestaurant())
                 : List.of();
 
-        List<AdhocRecommendation> recommendations =
-                recommendationService.generateAdhoc(date, request.meal(), request.likedKeywords(), favorites);
+        List<AdhocRecommendation> recommendations = recommendationService.generateForDemo(
+                request.targetUserId(), date, request.meal(), request.likedKeywords(), favorites);
         AdhocRecommendation top = recommendations.get(0);
 
         String title = "오늘의 " + request.meal().label() + " 추천";

@@ -70,11 +70,12 @@ public class User extends BaseTimeEntity {
         this.nickname = nickname;
         this.department = department;
         this.role = Role.USER;
-        this.pushNotificationEnabled = true;
-        this.notificationBreakfastEnabled = true;
-        this.notificationLunchEnabled = true;
-        this.notificationDinnerEnabled = true;
-        this.notificationEventEnabled = true;
+        // 푸시는 opt-in — 가입 시 전체 OFF. 사용자가 마이페이지에서 켜야 발송 대상이 된다.
+        this.pushNotificationEnabled = false;
+        this.notificationBreakfastEnabled = false;
+        this.notificationLunchEnabled = false;
+        this.notificationDinnerEnabled = false;
+        this.notificationEventEnabled = false;
     }
 
     /** 최상위 관리자(운영팀) 생성 — 부트스트랩 시더 전용. password는 이미 인코딩된 값이어야 한다. */

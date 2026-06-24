@@ -140,9 +140,9 @@ CREATE TABLE `Recommendation` (
     UNIQUE KEY `uq_recommendation_user_date_meal` (`user_id`, `date`, `meal`),  -- (사용자,날짜,끼니) 1행
     CONSTRAINT `fk_recommendation_user` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`)
 );
--- v1.7(2026-06-25): Recommendation에 meal 추가 — 추천을 끼니 단위로. reason은 RecommendationMenu(메뉴별)로 이동,
---   excluded_menu_ids 미사용(shortlist 순서가 중복방지 대신). 캐시 테이블이라 배포 시 drop&재생성 권장.
--- RecommendationMenu에는 display_order(추천 순위), reason(메뉴별 Gemini 이유) 컬럼이 있다(코드 기준).
+-- v1.7(2026-06-25): Recommendation에 meal 추가 — 추천을 끼니 단위로. reason/excluded_menu_ids 미사용
+--   (reason 표기 불필요 결정, 중복방지는 shortlist 순서가 대신). 캐시 테이블이라 배포 시 drop&재생성 권장.
+-- RecommendationMenu에는 display_order(추천 순위) 컬럼이 있다(메뉴는 후보 index로만 선택 → 없는 메뉴 저장 불가).
 
 -- AI 추천 메뉴 목록 (1:N)
 CREATE TABLE `RecommendationMenu` (
@@ -150,7 +150,6 @@ CREATE TABLE `RecommendationMenu` (
     `recommendation_id` BIGINT NOT NULL,
     `menu_id`           BIGINT NOT NULL,
     `display_order`     INT    NOT NULL,    -- 추천 순위(0=1순위/첫 화면, 1~3=새로고침 순차)
-    `reason`            TEXT   NULL,        -- 메뉴별 Gemini 추천 이유
     PRIMARY KEY (`id`),
     CONSTRAINT `fk_recmenu_recommendation` FOREIGN KEY (`recommendation_id`) REFERENCES `Recommendation` (`recommendation_id`),
     CONSTRAINT `fk_recmenu_menu`           FOREIGN KEY (`menu_id`)           REFERENCES `Menu` (`menu_id`)

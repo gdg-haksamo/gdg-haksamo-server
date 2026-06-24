@@ -32,9 +32,6 @@ public record TodayRecommendationResponse(
         @Schema(description = "영양정보")
         NutritionResponse nutrition,
 
-        @Schema(description = "AI 추천 이유 (한 문장)", example = "선호하시는 '매운 음식' 취향을 고려해 골라봤어요.")
-        String reason,
-
         @Schema(description = "추천 기준 날짜", example = "2026-06-25")
         LocalDate date,
 

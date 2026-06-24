@@ -82,7 +82,7 @@ public class RestGeminiClient implements GeminiClient {
         sb.append("아래 [").append(request.mealLabel()).append(" 메뉴] 중에서 사용자에게 추천할 메뉴를 좋은 순서대로 최대 ")
                 .append(request.count()).append("개 고르세요.\n");
         sb.append("- 서로 다른 메뉴를 고르고, 가장 추천하는 것을 맨 앞에 두세요.\n");
-        sb.append("- 각 메뉴마다 추천 이유를 한국어 한 문장(존댓말)으로 작성하세요.\n");
+        sb.append("- 반드시 아래 목록의 index 중에서만 고르세요(목록에 없는 메뉴를 만들지 마세요).\n");
         sb.append("- 선호 키워드가 있으면 우선 반영하고, 없으면 영양 균형과 보편적 선호로 고르세요.\n");
         sb.append("- 사용자의 선호 식당(★ 표시) 메뉴를 우선적으로 고려하세요.\n\n");
 
@@ -105,7 +105,7 @@ public class RestGeminiClient implements GeminiClient {
         sb.append(request.favoriteRestaurants().isEmpty() ? "없음" : String.join(", ", request.favoriteRestaurants()));
 
         sb.append("\n\n반드시 아래 JSON 형식으로만 답하세요(다른 텍스트 금지):\n");
-        sb.append("{\"picks\":[{\"index\":<메뉴 index 정수>,\"reason\":\"<추천 이유>\"}]}");
+        sb.append("{\"picks\":[{\"index\":<메뉴 index 정수>}]}");
         return sb.toString();
     }
 
@@ -119,7 +119,7 @@ public class RestGeminiClient implements GeminiClient {
         JsonNode picksNode = objectMapper.readTree(text.asText()).path("picks");
         List<GeminiPick> picks = new ArrayList<>();
         for (JsonNode node : picksNode) {
-            picks.add(new GeminiPick(node.path("index").asInt(-1), node.path("reason").asText("")));
+            picks.add(new GeminiPick(node.path("index").asInt(-1)));
         }
         return picks;
     }

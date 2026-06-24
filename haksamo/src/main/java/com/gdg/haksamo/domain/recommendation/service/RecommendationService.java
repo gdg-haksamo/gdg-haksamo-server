@@ -92,66 +92,58 @@ public class RecommendationService {
     }
 
     /**
-     * 데모용: 입력(날짜·끼니·선호 키워드·선호 식당)으로 추천 4개를 생성한다. <b>저장하지 않는다(무상태).</b>
-     * 유저의 저장된 선호와 무관하게 임의 시나리오를 시연하기 위함. (푸시는 1순위만 보내므로 기억 불필요)
+     * 데모용: 입력(날짜·끼니·선호 키워드·선호 식당)으로 추천 4개를 생성하고 <b>저장한다</b>(시연 새로고침이 동작하도록).
+     * 유저의 저장된 선호와 무관하게 임의 시나리오를 구성한다. 같은 (user,date,meal) 추천이 있으면 교체한다.
      */
-    @Transactional(readOnly = true)
-    public List<AdhocRecommendation> generateAdhoc(LocalDate date, MealTime meal,
+    @Transactional
+    public List<AdhocRecommendation> generateForDemo(Long userId, LocalDate date, MealTime meal,
+            List<String> likedKeywords, List<String> favoriteRestaurants) {
+        // 시연 재실행 대비 — 기존 추천을 지우고 새로 만든다. (delete를 INSERT 전에 flush해 유니크 충돌 방지)
+        recommendationRepository.findByUserIdAndDateAndMeal(userId, date, meal)
+                .ifPresent(recommendationRepository::delete);
+        recommendationRepository.flush();
+
+        List<String> keywords = (likedKeywords != null) ? likedKeywords : List.of();
+        List<String> favorites = (favoriteRestaurants != null) ? favoriteRestaurants : List.of();
+        Recommendation recommendation = buildAndStore(userId, date, meal, keywords, favorites);
+
+        List<AdhocRecommendation> result = new ArrayList<>();
+        for (RecommendationMenu rm : recommendation.getMenus()) {
+            Menu menu = rm.getMenu();
+            String restaurant = (menu.getRestaurant() != null) ? menu.getRestaurant().getName() : null;
+            result.add(new AdhocRecommendation(rm.getDisplayOrder(), menu.getMenuId(), menu.getName(), restaurant));
+        }
+        return result;
+    }
+
+    /** 앱 경로: 사용자의 저장된 선호(키워드·식당)로 생성·저장. */
+    private Recommendation generate(Long userId, LocalDate today, MealTime meal) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return buildAndStore(userId, today, meal, likedKeywords(user), favoriteRestaurantNames(user));
+    }
+
+    /** 후보 조회 → Gemini로 4개 선택 → (user,date,meal) 추천 + RecommendationMenu 저장. */
+    private Recommendation buildAndStore(Long userId, LocalDate date, MealTime meal,
             List<String> likedKeywords, List<String> favoriteRestaurants) {
         List<Menu> candidates = mealCandidates(date, meal);
         if (candidates.isEmpty()) {
             throw new BusinessException(ErrorCode.NO_MENU_TO_RECOMMEND);
         }
-        List<String> keywords = (likedKeywords != null) ? likedKeywords : List.of();
-        List<String> favorites = (favoriteRestaurants != null) ? favoriteRestaurants : List.of();
-        List<GeminiPick> picks = geminiClient.recommend(buildRequest(meal, candidates, keywords, favorites));
+        List<GeminiPick> picks = geminiClient.recommend(buildRequest(meal, candidates, likedKeywords, favoriteRestaurants));
 
-        List<AdhocRecommendation> result = new ArrayList<>();
-        int rank = 0;
-        Set<Long> used = new HashSet<>();
-        for (GeminiPick pick : picks) {
-            if (pick.index() < 0 || pick.index() >= candidates.size()) {
-                continue;
-            }
-            Menu menu = candidates.get(pick.index());
-            if (!used.add(menu.getMenuId())) {
-                continue;
-            }
-            String restaurant = (menu.getRestaurant() != null) ? menu.getRestaurant().getName() : null;
-            result.add(new AdhocRecommendation(rank++, menu.getMenuId(), menu.getName(), restaurant, pick.reason()));
-        }
-        if (result.isEmpty()) {
-            throw new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE);
-        }
-        return result;
-    }
-
-    private Recommendation generate(Long userId, LocalDate today, MealTime meal) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        List<Menu> candidates = mealCandidates(today, meal);
-        if (candidates.isEmpty()) {
-            throw new BusinessException(ErrorCode.NO_MENU_TO_RECOMMEND);
-        }
-        List<String> likedKeywords = likedKeywords(user);
-        List<String> favoriteRestaurants = favoriteRestaurantNames(user);
-
-        GeminiRecommendationRequest request = buildRequest(meal, candidates, likedKeywords, favoriteRestaurants);
-        List<GeminiPick> picks = geminiClient.recommend(request);
-
-        Recommendation recommendation = Recommendation.create(userId, today, meal);
+        Recommendation recommendation = Recommendation.create(userId, date, meal);
         int order = 0;
         Set<Long> usedMenuIds = new HashSet<>();
         for (GeminiPick pick : picks) {
             if (pick.index() < 0 || pick.index() >= candidates.size()) {
-                continue;
+                continue; // 모델이 후보 밖 index를 줘도 무시 → 없는 메뉴는 절대 저장되지 않음
             }
             Menu menu = candidates.get(pick.index());
             if (!usedMenuIds.add(menu.getMenuId())) {
                 continue;
             }
-            recommendation.addMenu(RecommendationMenu.of(menu, order++, pick.reason()));
+            recommendation.addMenu(RecommendationMenu.of(menu, order++));
         }
         if (recommendation.getMenus().isEmpty()) {
             throw new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE);
@@ -161,7 +153,7 @@ public class RecommendationService {
             return recommendationRepository.saveAndFlush(recommendation);
         } catch (DataIntegrityViolationException e) {
             // 동시 첫 요청 → (user_id, date, meal) 유니크 충돌. 먼저 저장된 행 재사용.
-            return recommendationRepository.findByUserIdAndDateAndMeal(userId, today, meal)
+            return recommendationRepository.findByUserIdAndDateAndMeal(userId, date, meal)
                     .orElseThrow(() -> new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE));
         }
     }
@@ -226,7 +218,6 @@ public class RecommendationService {
                 menu.getImageUrl(),
                 menu.getDescription(),
                 new NutritionResponse(menu.getCalories(), menu.getProtein(), menu.getCarb(), menu.getFat()),
-                current.getReason(),
                 recommendation.getDate(),
                 recommendation.getMeal(),
                 recommendation.getRefreshCount(),
