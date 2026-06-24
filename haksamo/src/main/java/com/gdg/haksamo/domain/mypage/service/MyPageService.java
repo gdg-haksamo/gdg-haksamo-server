@@ -1,5 +1,6 @@
 package com.gdg.haksamo.domain.mypage.service;
 
+import com.gdg.haksamo.domain.event.EventRepository;
 import com.gdg.haksamo.domain.mypage.dto.FavoriteRestaurantResponse;
 import com.gdg.haksamo.domain.mypage.dto.FavoriteRestaurantsUpdateRequest;
 import com.gdg.haksamo.domain.mypage.dto.MyPageResponse;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -34,12 +36,14 @@ public class MyPageService {
     private final FavoriteRestaurantRepository favoriteRestaurantRepository;
     private final PreferenceRepository preferenceRepository;
     private final RestaurantRepository restaurantRepository;
+    private final EventRepository eventRepository;
 
     public MyPageResponse getMyPage(Long userId) {
         User user = getUser(userId);
 
         long reviewCount = reviewRepository.countByUserId(userId);
         long helpfulReceivedCount = reviewHelpfulRepository.countHelpfulReceivedByUserId(userId);
+        long activeEventCount = eventRepository.countActiveEvents(LocalDate.now());
 
         List<FavoriteRestaurantResponse> favoriteRestaurants = favoriteRestaurantRepository.findByUser(user)
                 .stream()
@@ -60,7 +64,7 @@ public class MyPageService {
                 user.getGrade(),
                 reviewCount,
                 helpfulReceivedCount,
-                null, // 이벤트 기능 미구현
+                activeEventCount,
                 favoriteRestaurants,
                 preferenceKeywords,
                 toNotificationSettingsResponse(user)

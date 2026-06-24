@@ -22,7 +22,7 @@ public record MyPageResponse(
         @Schema(description = "도움됐어요 받은 누계", example = "12")
         long helpfulReceivedCount,
 
-        @Schema(description = "진행 중인 이벤트 수 (이벤트 기능 미구현, 항상 null)")
+        @Schema(description = "진행 중인 이벤트 수 (오늘이 시작일~종료일 사이인 이벤트 개수)", example = "2")
         Long activeEventCount,
 
         @Schema(description = "자주 가는 식당 목록")
