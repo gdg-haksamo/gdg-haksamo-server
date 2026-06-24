@@ -17,7 +17,7 @@ public record AdhocRecommendation(
         @Schema(description = "메뉴명", example = "매운제육덮밥")
         String menuName,
 
-        @Schema(description = "식당명", example = "복지관")
+        @Schema(description = "식당명(메뉴에 식당 정보가 없으면 null)", example = "복지관", nullable = true)
         String restaurant
 ) {
 }

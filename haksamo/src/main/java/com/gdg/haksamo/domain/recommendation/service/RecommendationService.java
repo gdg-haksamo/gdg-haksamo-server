@@ -136,6 +136,9 @@ public class RecommendationService {
         int order = 0;
         Set<Long> usedMenuIds = new HashSet<>();
         for (GeminiPick pick : picks) {
+            if (recommendation.getMenus().size() >= SHORTLIST_SIZE) {
+                break; // "끼니별 4개" 계약 강제 — 모델이 초과 응답을 줘도 상한에서 끊는다
+            }
             if (pick.index() < 0 || pick.index() >= candidates.size()) {
                 continue; // 모델이 후보 밖 index를 줘도 무시 → 없는 메뉴는 절대 저장되지 않음
             }

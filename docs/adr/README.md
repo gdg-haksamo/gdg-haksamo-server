@@ -8,6 +8,7 @@
 - 상태: `제안` / `채택` / `폐기` / `대체됨`.
 
 ## 목록
+
 | 번호 | 제목 | 상태 |
 |------|------|------|
 | [0001](0001-ai-recommendation-generation-strategy.md) | AI 추천 생성 전략 (끼니별 per-user vs 서명 dedup) | 채택 |
