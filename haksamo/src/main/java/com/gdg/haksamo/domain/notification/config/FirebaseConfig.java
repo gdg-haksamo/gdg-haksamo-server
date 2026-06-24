@@ -7,6 +7,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -36,8 +37,11 @@ public class FirebaseConfig {
         if (!FirebaseApp.getApps().isEmpty()) {
             return FirebaseApp.getInstance();
         }
-        GoogleCredentials credentials = GoogleCredentials.fromStream(
-                new ByteArrayInputStream(credentialsJson.getBytes(StandardCharsets.UTF_8)));
+        // 값은 base64(권장, .env/heredoc 안전) 또는 원본 JSON 둘 다 허용. '{'로 시작하면 원본으로 본다.
+        byte[] json = credentialsJson.trim().startsWith("{")
+                ? credentialsJson.getBytes(StandardCharsets.UTF_8)
+                : Base64.getDecoder().decode(credentialsJson.trim());
+        GoogleCredentials credentials = GoogleCredentials.fromStream(new ByteArrayInputStream(json));
         FirebaseApp app = FirebaseApp.initializeApp(
                 FirebaseOptions.builder().setCredentials(credentials).build());
         log.info("FirebaseApp 초기화 완료 (FCM 실제 발송 활성)");
