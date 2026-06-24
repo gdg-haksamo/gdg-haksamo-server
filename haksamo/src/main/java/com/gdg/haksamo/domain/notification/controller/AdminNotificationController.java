@@ -1,5 +1,7 @@
 package com.gdg.haksamo.domain.notification.controller;
 
+import com.gdg.haksamo.domain.notification.dto.DemoPushRequest;
+import com.gdg.haksamo.domain.notification.dto.DemoPushResponse;
 import com.gdg.haksamo.domain.notification.dto.RecommendationPushRequest;
 import com.gdg.haksamo.domain.notification.dto.RecommendationPushResponse;
 import com.gdg.haksamo.domain.notification.service.NotificationService;
@@ -31,5 +33,13 @@ public class AdminNotificationController {
     public ApiResponse<RecommendationPushResponse> pushRecommendation(
             @Valid @RequestBody RecommendationPushRequest request) {
         return ApiResponse.success(notificationService.pushTodayRecommendation(request.userId(), request.meal()));
+    }
+
+    @Operation(summary = "[데모] 입력 기반 추천 생성 + 푸시",
+            description = "날짜·끼니·선호 키워드·선호 식당(1개)을 직접 입력해 추천 4개를 생성하고 1순위를 즉시 푸시한다. "
+                    + "유저의 저장된 선호와 무관하게 시연 시나리오를 구성한다(추천 저장 안 함). SUPER_ADMIN 전용.")
+    @PostMapping("/recommendation-push/demo")
+    public ApiResponse<DemoPushResponse> demoPush(@Valid @RequestBody DemoPushRequest request) {
+        return ApiResponse.success(notificationService.demoPush(request));
     }
 }

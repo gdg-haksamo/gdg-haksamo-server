@@ -6,6 +6,7 @@ import com.gdg.haksamo.domain.menu.entity.Menu;
 import com.gdg.haksamo.domain.menu.entity.MenuSchedule;
 import com.gdg.haksamo.domain.menu.repository.MenuScheduleRepository;
 import com.gdg.haksamo.domain.preference.PreferenceRepository;
+import com.gdg.haksamo.domain.recommendation.dto.AdhocRecommendation;
 import com.gdg.haksamo.domain.recommendation.dto.TodayRecommendationResponse;
 import com.gdg.haksamo.domain.recommendation.entity.Recommendation;
 import com.gdg.haksamo.domain.recommendation.entity.RecommendationMenu;
@@ -88,6 +89,41 @@ public class RecommendationService {
 
     private MealTime resolveMeal(MealTime meal) {
         return (meal != null) ? meal : MealTime.fromTime(LocalTime.now(KST));
+    }
+
+    /**
+     * 데모용: 입력(날짜·끼니·선호 키워드·선호 식당)으로 추천 4개를 생성한다. <b>저장하지 않는다(무상태).</b>
+     * 유저의 저장된 선호와 무관하게 임의 시나리오를 시연하기 위함. (푸시는 1순위만 보내므로 기억 불필요)
+     */
+    @Transactional(readOnly = true)
+    public List<AdhocRecommendation> generateAdhoc(LocalDate date, MealTime meal,
+            List<String> likedKeywords, List<String> favoriteRestaurants) {
+        List<Menu> candidates = mealCandidates(date, meal);
+        if (candidates.isEmpty()) {
+            throw new BusinessException(ErrorCode.NO_MENU_TO_RECOMMEND);
+        }
+        List<String> keywords = (likedKeywords != null) ? likedKeywords : List.of();
+        List<String> favorites = (favoriteRestaurants != null) ? favoriteRestaurants : List.of();
+        List<GeminiPick> picks = geminiClient.recommend(buildRequest(meal, candidates, keywords, favorites));
+
+        List<AdhocRecommendation> result = new ArrayList<>();
+        int rank = 0;
+        Set<Long> used = new HashSet<>();
+        for (GeminiPick pick : picks) {
+            if (pick.index() < 0 || pick.index() >= candidates.size()) {
+                continue;
+            }
+            Menu menu = candidates.get(pick.index());
+            if (!used.add(menu.getMenuId())) {
+                continue;
+            }
+            String restaurant = (menu.getRestaurant() != null) ? menu.getRestaurant().getName() : null;
+            result.add(new AdhocRecommendation(rank++, menu.getMenuId(), menu.getName(), restaurant, pick.reason()));
+        }
+        if (result.isEmpty()) {
+            throw new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE);
+        }
+        return result;
     }
 
     private Recommendation generate(Long userId, LocalDate today, MealTime meal) {
