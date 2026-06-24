@@ -21,4 +21,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("select avg(r.rating) from Review r where r.menu = :menu")
     Double averageRatingForMenu(@Param("menu") Menu menu);
+
+    long countByUserId(Long userId);
 }

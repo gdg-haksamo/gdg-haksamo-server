@@ -99,6 +99,49 @@ public class User extends BaseTimeEntity {
     }
 
     /**
+     * 알림 설정 변경 (마이페이지).
+     * - 끼니별/이벤트 토글 중 하나라도 켜져 있으면 마스터(pushNotificationEnabled)는 자동으로 ON.
+     * - 마스터를 명시적으로 false로 보내면 하위 4개를 전부 OFF로 같이 끈다.
+     * - 마스터를 명시적으로 true로 보냈는데 하위 4개가 전부 OFF인 상태라면 하위 4개를 전부 ON으로 켠다.
+     */
+    public void updateNotificationSettings(Boolean breakfast, Boolean lunch, Boolean dinner, Boolean event, Boolean masterOn) {
+        if (masterOn != null && !masterOn) {
+            this.notificationBreakfastEnabled = false;
+            this.notificationLunchEnabled = false;
+            this.notificationDinnerEnabled = false;
+            this.notificationEventEnabled = false;
+            this.pushNotificationEnabled = false;
+            return;
+        }
+
+        if (breakfast != null) {
+            this.notificationBreakfastEnabled = breakfast;
+        }
+        if (lunch != null) {
+            this.notificationLunchEnabled = lunch;
+        }
+        if (dinner != null) {
+            this.notificationDinnerEnabled = dinner;
+        }
+        if (event != null) {
+            this.notificationEventEnabled = event;
+        }
+
+        boolean anyOn = this.notificationBreakfastEnabled || this.notificationLunchEnabled
+                || this.notificationDinnerEnabled || this.notificationEventEnabled;
+
+        if (Boolean.TRUE.equals(masterOn) && !anyOn) {
+            this.notificationBreakfastEnabled = true;
+            this.notificationLunchEnabled = true;
+            this.notificationDinnerEnabled = true;
+            this.notificationEventEnabled = true;
+            anyOn = true;
+        }
+
+        this.pushNotificationEnabled = anyOn;
+    }
+
+    /**
      * 권한·담당 식당 변경 (SUPER_ADMIN의 계정 관리 API 전용).
      * RESTAURANT_ADMIN이 아닌 권한으로 바꾸면 담당 식당은 자동으로 해제(null)된다.
      */
