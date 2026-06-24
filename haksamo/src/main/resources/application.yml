@@ -16,6 +16,13 @@ jwt:
   access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}          # 1시간
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:1209600000}     # 14일
 
+# AI 추천(Gemini). dev는 스텁이 동작하므로 api-key 없이도 기동됨.
+# prod는 RestGeminiClient가 실제 호출 → GEMINI_API_KEY 필수(Generative Language API 키, GCP 서비스계정 불필요).
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-1.5-flash}
+  base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
+
 app:
   # Refresh Token 쿠키 속성 (프로파일/환경별 override)
   #  - dev(같은 사이트, http localhost): Lax / secure=false
