@@ -107,6 +107,20 @@ public class MenuAdminService {
         return MenuAdminResponse.from(menu);
     }
 
+    /**
+     * 메뉴 이미지 URL 주입(데모용 임시책). 메뉴가 속한 식당을 담당하는 관리자만 가능(403 A008).
+     * 크롤은 image_url을 NULL로 두고, 관리자가 S3/CDN에 올린 이미지 URL을 여기로 주입한다.
+     * (서버가 파일 업로드까지 하는 풀버전은 데모 이후 후속 — docs/admin-integration-notes.md)
+     */
+    @Transactional
+    public MenuAdminResponse updateMenuImage(Long userId, Long menuId, String imageUrl) {
+        Menu menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+        restaurantAdminGuard.requirePermission(userId, menu.getRestaurant().getRestaurantId());
+        menu.setImageUrl(imageUrl);
+        return MenuAdminResponse.from(menu);
+    }
+
     /** 이름·가격 수정. 메뉴가 속한 식당을 담당하는 관리자만 가능. */
     @Transactional
     public MenuAdminResponse updateMenu(Long userId, Long menuId, MenuUpdateRequest request) {

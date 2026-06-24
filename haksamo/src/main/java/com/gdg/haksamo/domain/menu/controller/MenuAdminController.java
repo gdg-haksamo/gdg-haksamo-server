@@ -3,6 +3,7 @@ package com.gdg.haksamo.domain.menu.controller;
 import com.gdg.haksamo.domain.menu.dto.ManagedMenuResponse;
 import com.gdg.haksamo.domain.menu.dto.MenuAdminResponse;
 import com.gdg.haksamo.domain.menu.dto.MenuCreateRequest;
+import com.gdg.haksamo.domain.menu.dto.MenuImageUpdateRequest;
 import com.gdg.haksamo.domain.menu.dto.MenuUpdateRequest;
 import com.gdg.haksamo.domain.menu.service.MenuAdminService;
 import com.gdg.haksamo.global.response.ApiResponse;
@@ -73,6 +74,18 @@ public class MenuAdminController {
             @Valid @RequestBody MenuUpdateRequest request
     ) {
         return ApiResponse.success(menuAdminService.updateMenu(userId, menuId, request));
+    }
+
+    @Operation(summary = "메뉴 이미지 URL 주입(데모용 임시)",
+            description = "관리자가 S3/CDN에 올린 이미지 URL을 메뉴에 주입합니다. 본인 담당 식당만 가능(403 A008). "
+                    + "SUPER_ADMIN은 전 식당, RESTAURANT_ADMIN은 자기 식당만.")
+    @PatchMapping("/{menuId}/image")
+    public ApiResponse<MenuAdminResponse> updateMenuImage(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long menuId,
+            @Valid @RequestBody MenuImageUpdateRequest request
+    ) {
+        return ApiResponse.success(menuAdminService.updateMenuImage(userId, menuId, request.imageUrl()));
     }
 
     @Operation(summary = "메뉴 삭제", description = "메뉴와 연결된 리뷰·도움됐어요·편성을 함께 삭제합니다. 본인 담당 식당만 가능(403 A008).")
