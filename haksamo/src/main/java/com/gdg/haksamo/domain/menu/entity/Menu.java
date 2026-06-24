@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
+// (식당, 이름) 식별자 = upsert 기준·리뷰 정합성 방어선 (erd.sql uq_menu_identity).
+@Table(uniqueConstraints = @UniqueConstraint(name = "uq_menu_identity", columnNames = {"restaurant_id", "name"}))
 @Getter
 @Setter
 @NoArgsConstructor

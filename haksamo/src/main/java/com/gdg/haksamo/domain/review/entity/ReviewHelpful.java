@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"review_id", "userId"}))
+// userId의 물리 컬럼명은 user_id — 제약 컬럼명을 실제 컬럼(user_id)에 맞춰야 UNIQUE가 형성된다.
+@Table(uniqueConstraints = @UniqueConstraint(name = "uq_review_helpful_user", columnNames = {"review_id", "user_id"}))
 public class ReviewHelpful {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
