@@ -67,27 +67,33 @@ public class RestGeminiClient implements GeminiClient {
                     .body(body)
                     .retrieve()
                     .body(String.class);
-            return parse(raw);
-        } catch (BusinessException e) {
-            throw e;
+            List<GeminiPick> picks = parse(raw);
+            if (picks.isEmpty()) {
+                log.warn("Gemini 응답 picks 비어있음 — 결정론적 폴백으로 대체");
+                return DeterministicPicker.pick(request);
+            }
+            return picks;
         } catch (Exception e) {
-            log.error("Gemini 추천 호출 실패", e);
-            throw new BusinessException(ErrorCode.RECOMMENDATION_UNAVAILABLE);
+            // 한도초과(429)·네트워크·파싱 오류 등 → 추천이 끊기지 않게 결정론적 추천으로 폴백(시연 안전).
+            log.warn("Gemini 추천 호출 실패 — 결정론적 폴백으로 대체: {}", e.toString());
+            return DeterministicPicker.pick(request);
         }
     }
 
     private String buildPrompt(GeminiRecommendationRequest request) {
         StringBuilder sb = new StringBuilder();
         sb.append("당신은 경북대학교 학식 추천 도우미입니다.\n");
-        sb.append("아래 [오늘의 메뉴] 중에서 사용자에게 추천할 메뉴를 좋은 순서대로 최대 ")
+        sb.append("아래 [").append(request.mealLabel()).append(" 메뉴] 중에서 사용자에게 추천할 메뉴를 좋은 순서대로 최대 ")
                 .append(request.count()).append("개 고르세요.\n");
         sb.append("- 서로 다른 메뉴를 고르고, 가장 추천하는 것을 맨 앞에 두세요.\n");
-        sb.append("- 각 메뉴마다 추천 이유를 한국어 한 문장(존댓말)으로 작성하세요.\n");
-        sb.append("- 선호 키워드가 있으면 우선 반영하고, 없으면 영양 균형과 보편적 선호로 고르세요.\n\n");
+        sb.append("- 반드시 아래 목록의 index 중에서만 고르세요(목록에 없는 메뉴를 만들지 마세요).\n");
+        sb.append("- 선호 키워드가 있으면 우선 반영하고, 없으면 영양 균형과 보편적 선호로 고르세요.\n");
+        sb.append("- 사용자의 선호 식당(★ 표시) 메뉴를 우선적으로 고려하세요.\n\n");
 
-        sb.append("[오늘의 메뉴]\n");
+        sb.append("[").append(request.mealLabel()).append(" 메뉴]\n");
         for (GeminiCandidate c : request.candidates()) {
             sb.append("index=").append(c.index())
+                    .append(c.favorite() ? " | ★선호식당" : "")
                     .append(" | ").append(c.name())
                     .append(" | 식당=").append(c.restaurant() == null ? "미상" : c.restaurant())
                     .append(" | 칼로리=").append(c.calories() == null ? "?" : c.calories())
@@ -99,9 +105,11 @@ public class RestGeminiClient implements GeminiClient {
 
         sb.append("\n[사용자 선호 키워드]\n");
         sb.append(request.likedKeywords().isEmpty() ? "없음" : String.join(", ", request.likedKeywords()));
+        sb.append("\n[사용자 선호 식당]\n");
+        sb.append(request.favoriteRestaurants().isEmpty() ? "없음" : String.join(", ", request.favoriteRestaurants()));
 
         sb.append("\n\n반드시 아래 JSON 형식으로만 답하세요(다른 텍스트 금지):\n");
-        sb.append("{\"picks\":[{\"index\":<메뉴 index 정수>,\"reason\":\"<추천 이유>\"}]}");
+        sb.append("{\"picks\":[{\"index\":<메뉴 index 정수>}]}");
         return sb.toString();
     }
 
@@ -115,7 +123,7 @@ public class RestGeminiClient implements GeminiClient {
         JsonNode picksNode = objectMapper.readTree(text.asText()).path("picks");
         List<GeminiPick> picks = new ArrayList<>();
         for (JsonNode node : picksNode) {
-            picks.add(new GeminiPick(node.path("index").asInt(-1), node.path("reason").asText("")));
+            picks.add(new GeminiPick(node.path("index").asInt(-1)));
         }
         return picks;
     }

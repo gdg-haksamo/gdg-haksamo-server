@@ -70,11 +70,12 @@ public class User extends BaseTimeEntity {
         this.nickname = nickname;
         this.department = department;
         this.role = Role.USER;
-        this.pushNotificationEnabled = true;
-        this.notificationBreakfastEnabled = true;
-        this.notificationLunchEnabled = true;
-        this.notificationDinnerEnabled = true;
-        this.notificationEventEnabled = true;
+        // 푸시는 opt-in — 가입 시 전체 OFF. 사용자가 마이페이지에서 켜야 발송 대상이 된다.
+        this.pushNotificationEnabled = false;
+        this.notificationBreakfastEnabled = false;
+        this.notificationLunchEnabled = false;
+        this.notificationDinnerEnabled = false;
+        this.notificationEventEnabled = false;
     }
 
     /** 최상위 관리자(운영팀) 생성 — 부트스트랩 시더 전용. password는 이미 인코딩된 값이어야 한다. */
@@ -155,6 +156,18 @@ public class User extends BaseTimeEntity {
 
     public boolean isSuperAdmin() {
         return this.role == Role.SUPER_ADMIN;
+    }
+
+    /** 끼니별 추천 알림 수신 여부 — 마스터 토글 AND 해당 끼니 토글. (스케줄러 발송 대상 판정) */
+    public boolean isMealNotificationEnabled(com.gdg.haksamo.domain.menu.entity.MealTime meal) {
+        if (!pushNotificationEnabled) {
+            return false;
+        }
+        return switch (meal) {
+            case BREAKFAST -> notificationBreakfastEnabled;
+            case LUNCH -> notificationLunchEnabled;
+            case DINNER -> notificationDinnerEnabled;
+        };
     }
 
     public boolean canManageRestaurant(Long restaurantId) {

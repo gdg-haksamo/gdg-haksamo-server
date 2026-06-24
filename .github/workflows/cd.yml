@@ -16,6 +16,9 @@
 #   ADMIN_EMAIL        - 최초 SUPER_ADMIN(운영팀) 계정 이메일 (시더용, 1회 생성)
 #   ADMIN_PASSWORD     - 최초 SUPER_ADMIN 비밀번호 (DB엔 BCrypt 해시로 저장)
 #   ADMIN_NICKNAME     - (선택) SUPER_ADMIN 닉네임, 미설정 시 "관리자"
+#   GEMINI_API_KEY     - Google AI Studio API 키 (AI 추천 실호출). 없으면 추천 503
+#   FCM_ENABLED        - true 면 실제 FCM 발송. 미설정/false 면 로그만(앱은 정상 기동)
+#   FCM_CREDENTIALS_JSON - Firebase 서비스계정 JSON을 base64로 인코딩한 문자열 (FCM_ENABLED=true일 때 필수)
 
 name: CD - Deploy to EC2
 
@@ -122,6 +125,9 @@ jobs:
             ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
             ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
             ADMIN_NICKNAME=${{ secrets.ADMIN_NICKNAME }}
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            FCM_ENABLED=${{ secrets.FCM_ENABLED }}
+            FCM_CREDENTIALS_JSON=${{ secrets.FCM_CREDENTIALS_JSON }}
             ENVEOF
 
             # GHCR 로그인 (이미지 pull 권한)

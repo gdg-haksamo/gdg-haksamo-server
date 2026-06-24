@@ -1,6 +1,7 @@
 package com.gdg.haksamo.domain.recommendation.dto;
 
 import com.gdg.haksamo.domain.menu.dto.NutritionResponse;
+import com.gdg.haksamo.domain.menu.entity.MealTime;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 
@@ -31,11 +32,11 @@ public record TodayRecommendationResponse(
         @Schema(description = "영양정보")
         NutritionResponse nutrition,
 
-        @Schema(description = "AI 추천 이유 (한 문장)", example = "선호하시는 '매운 음식' 취향을 고려해 골라봤어요.")
-        String reason,
-
         @Schema(description = "추천 기준 날짜", example = "2026-06-25")
         LocalDate date,
+
+        @Schema(description = "끼니(BREAKFAST/LUNCH/DINNER)", example = "LUNCH")
+        MealTime meal,
 
         @Schema(description = "오늘 사용한 새로고침 횟수", example = "0")
         int refreshCount,

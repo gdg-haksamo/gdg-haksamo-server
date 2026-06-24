@@ -19,6 +19,9 @@ public interface MenuScheduleRepository extends JpaRepository<MenuSchedule, Long
 
     List<MenuSchedule> findByDate(LocalDate date);
 
+    // 끼니별 추천 후보 — 특정 날짜·끼니의 편성 목록
+    List<MenuSchedule> findByDateAndTime(LocalDate date, MealTime time);
+
     // 관리자 메뉴 조회용 — 특정 식당의 특정 날짜 편성 목록
     List<MenuSchedule> findByMenu_Restaurant_RestaurantIdAndDate(Long restaurantId, LocalDate date);
 

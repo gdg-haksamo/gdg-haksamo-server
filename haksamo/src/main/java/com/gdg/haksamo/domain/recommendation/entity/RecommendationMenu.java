@@ -18,7 +18,6 @@ import lombok.NoArgsConstructor;
  * 추천 헤더에 매달리는 개별 추천 메뉴(미리 받아둔 shortlist의 한 칸).
  *
  * <p>{@code displayOrder = 0}이 1순위(첫 화면), 새로고침할수록 다음 순번을 보여준다.
- * {@code reason}은 해당 메뉴에 대한 Gemini 한 줄 추천 이유다.
  * 리뷰 정합성을 위해 영구 카탈로그인 {@link Menu} 기준으로 저장한다.
  */
 @Entity
@@ -43,17 +42,13 @@ public class RecommendationMenu {
     @Column(name = "display_order", nullable = false)
     private int displayOrder;
 
-    @Column(columnDefinition = "TEXT")
-    private String reason;
-
-    private RecommendationMenu(Menu menu, int displayOrder, String reason) {
+    private RecommendationMenu(Menu menu, int displayOrder) {
         this.menu = menu;
         this.displayOrder = displayOrder;
-        this.reason = reason;
     }
 
-    public static RecommendationMenu of(Menu menu, int displayOrder, String reason) {
-        return new RecommendationMenu(menu, displayOrder, reason);
+    public static RecommendationMenu of(Menu menu, int displayOrder) {
+        return new RecommendationMenu(menu, displayOrder);
     }
 
     void assignTo(Recommendation recommendation) {

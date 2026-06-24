@@ -132,21 +132,24 @@ CREATE TABLE `Recommendation` (
     `recommendation_id`  BIGINT   NOT NULL AUTO_INCREMENT,
     `user_id`            BIGINT   NOT NULL,
     `date`               DATE     NOT NULL,
-    `reason`             TEXT     NULL,    -- Gemini 추천 이유 (해당 추천 row 단위)
-    `refresh_count`      INT      NOT NULL DEFAULT 0,   -- 오늘 새로고침 횟수 (최대 3회)
-    `excluded_menu_ids`  JSON     NULL,    -- 오늘 이미 추천한 menu_id 목록 (중복 추천 방지용)
+    `meal`               ENUM('BREAKFAST','LUNCH','DINNER') NOT NULL,  -- 끼니(아침/점심/저녁) — 끼니별 추천
+    `refresh_count`      INT      NOT NULL DEFAULT 0,   -- 끼니별 새로고침 횟수 (최대 3회)
     `created_at`         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- 마지막 새로고침 시각
     PRIMARY KEY (`recommendation_id`),
-    UNIQUE KEY `uq_recommendation_user_date` (`user_id`, `date`),  -- 하루 1행 강제
+    UNIQUE KEY `uq_recommendation_user_date_meal` (`user_id`, `date`, `meal`),  -- (사용자,날짜,끼니) 1행
     CONSTRAINT `fk_recommendation_user` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`)
 );
+-- v1.7(2026-06-25): Recommendation에 meal 추가 — 추천을 끼니 단위로. reason/excluded_menu_ids 미사용
+--   (reason 표기 불필요 결정, 중복방지는 shortlist 순서가 대신). 캐시 테이블이라 배포 시 drop&재생성 권장.
+-- RecommendationMenu에는 display_order(추천 순위) 컬럼이 있다(메뉴는 후보 index로만 선택 → 없는 메뉴 저장 불가).
 
 -- AI 추천 메뉴 목록 (1:N)
 CREATE TABLE `RecommendationMenu` (
     `id`                BIGINT NOT NULL AUTO_INCREMENT,
     `recommendation_id` BIGINT NOT NULL,
     `menu_id`           BIGINT NOT NULL,
+    `display_order`     INT    NOT NULL,    -- 추천 순위(0=1순위/첫 화면, 1~3=새로고침 순차)
     PRIMARY KEY (`id`),
     CONSTRAINT `fk_recmenu_recommendation` FOREIGN KEY (`recommendation_id`) REFERENCES `Recommendation` (`recommendation_id`),
     CONSTRAINT `fk_recmenu_menu`           FOREIGN KEY (`menu_id`)           REFERENCES `Menu` (`menu_id`)
