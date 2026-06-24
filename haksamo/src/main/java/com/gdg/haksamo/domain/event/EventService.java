@@ -1,6 +1,5 @@
 package com.gdg.haksamo.domain.event;
 
-import com.gdg.haksamo.domain.user.entity.Role;
 import com.gdg.haksamo.domain.user.entity.User;
 import com.gdg.haksamo.domain.user.repository.UserRepository;
 import com.gdg.haksamo.global.exception.BusinessException;
@@ -36,10 +35,10 @@ public class EventService {
         return EventDto.Response.from(event);
     }
 
-    // 등록 (관리자 전용)
+    // 등록 (운영팀 SUPER_ADMIN 전용)
     @Transactional
     public EventDto.Response createEvent(Long userId, EventDto.Request request) {
-        requireAdmin(userId);
+        requireSuperAdmin(userId);
 
         Event event = Event.builder()
                 .title(request.getTitle())
@@ -51,10 +50,10 @@ public class EventService {
         return EventDto.Response.from(eventRepository.save(event));
     }
 
-    // 수정 (관리자 전용)
+    // 수정 (운영팀 SUPER_ADMIN 전용)
     @Transactional
     public EventDto.Response updateEvent(Long userId, Long eventId, EventDto.Request request) {
-        requireAdmin(userId);
+        requireSuperAdmin(userId);
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_NOT_FOUND));
@@ -63,21 +62,21 @@ public class EventService {
         return EventDto.Response.from(event);
     }
 
-    // 삭제 (관리자 전용)
+    // 삭제 (운영팀 SUPER_ADMIN 전용)
     @Transactional
     public void deleteEvent(Long userId, Long eventId) {
-        requireAdmin(userId);
+        requireSuperAdmin(userId);
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_NOT_FOUND));
         eventRepository.delete(event);
     }
 
-    // 관리자(식당 운영자/운영팀 구분 없이) 권한 체크
-    private void requireAdmin(Long userId) {
+    // 이벤트는 app-wide 운영팀 콘텐츠(식당 소속 없음) → SUPER_ADMIN만 등록/수정/삭제
+    private void requireSuperAdmin(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        if (user.getRole() == Role.USER) {
+        if (!user.isSuperAdmin()) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
     }
