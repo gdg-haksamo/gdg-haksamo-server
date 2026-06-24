@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,10 +24,10 @@ public class UserController {
     /** 로그인 사용자의 FCM 토큰 등록/갱신. principal = userId(Long). */
     @Operation(summary = "FCM 토큰 등록/갱신", description = "푸시 알림용 FCM 토큰을 저장한다.")
     @PatchMapping("/me/fcm-token")
-    public ResponseEntity<ApiResponse<Void>> registerFcmToken(
+    public ApiResponse<Void> registerFcmToken(
             @AuthenticationPrincipal Long userId,
             @Valid @RequestBody FcmTokenRequest request) {
         userService.registerFcmToken(userId, request.fcmToken());
-        return ResponseEntity.ok(ApiResponse.success());
+        return ApiResponse.success();
     }
 }
