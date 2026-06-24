@@ -13,9 +13,6 @@ public record MyPageResponse(
         @Schema(description = "학과", example = "컴퓨터학부")
         String department,
 
-        @Schema(description = "학년", example = "2")
-        Integer grade,
-
         @Schema(description = "작성한 리뷰 수", example = "5")
         long reviewCount,
 

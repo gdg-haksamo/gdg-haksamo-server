@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 /**
  * 회원가입 1단계(기본 정보) 요청.
  * 이메일 도메인 제한 없음 — 형식(@Email)과 중복만 검증.
+ * 학년(grade)은 회원가입에서 입력받지 않기로 결정 → 필드 제거.
  * 자주 가는 식당/선호 키워드(2·3단계)는 Restaurant/Preference 도메인 완성 후 연동 예정.
  */
 public record SignUpRequest(
@@ -23,7 +24,6 @@ public record SignUpRequest(
         @Size(min = 2, max = 8, message = "닉네임은 2~8자여야 합니다.")
         String nickname,
 
-        String department,
-        Integer grade
+        String department
 ) {
 }

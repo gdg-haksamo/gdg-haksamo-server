@@ -75,7 +75,7 @@ SecurityConfig {
                         // [비로그인 접근정책] 메인 "오늘의 학식 메뉴 리스트"만 공개.
                         // 메뉴 상세 / 리뷰 / 식당 목록 등은 공개하지 않음 → 비로그인 시 401(ApiResponse) → FE가 로그인 유도
                         // (dev 프로파일은 DummyAuthFilter가 토큰 없으면 userId=1로 채워줘서 로그인 없이도 테스트 가능)
-                        .requestMatchers(HttpMethod.GET, "/menus").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/menus").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(authenticationEntryPoint)

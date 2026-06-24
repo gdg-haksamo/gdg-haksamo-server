@@ -40,7 +40,6 @@ public class User extends BaseTimeEntity {
     private String nickname;
 
     private String department; // 학과 (회원가입 시 입력)
-    private Integer grade;      // 학년
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -65,12 +64,11 @@ public class User extends BaseTimeEntity {
     private boolean notificationEventEnabled;
 
     @Builder
-    private User(String email, String password, String nickname, String department, Integer grade) {
+    private User(String email, String password, String nickname, String department) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.department = department;
-        this.grade = grade;
         this.role = Role.USER;
         this.pushNotificationEnabled = true;
         this.notificationBreakfastEnabled = true;
@@ -81,14 +79,14 @@ public class User extends BaseTimeEntity {
 
     /** 최상위 관리자(운영팀) 생성 — 부트스트랩 시더 전용. password는 이미 인코딩된 값이어야 한다. */
     public static User createSuperAdmin(String email, String encodedPassword, String nickname) {
-        User user = new User(email, encodedPassword, nickname, null, null);
+        User user = new User(email, encodedPassword, nickname, null);
         user.role = Role.SUPER_ADMIN;
         return user;
     }
 
     /** 식당 운영자 계정 생성 — SUPER_ADMIN이 발급. password는 이미 인코딩된 값이어야 한다. */
     public static User createRestaurantAdmin(String email, String encodedPassword, String nickname, Long restaurantId) {
-        User user = new User(email, encodedPassword, nickname, null, null);
+        User user = new User(email, encodedPassword, nickname, null);
         user.role = Role.RESTAURANT_ADMIN;
         user.managedRestaurantId = restaurantId;
         return user;

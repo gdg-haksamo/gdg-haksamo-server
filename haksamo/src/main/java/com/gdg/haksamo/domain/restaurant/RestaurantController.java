@@ -16,7 +16,7 @@ import java.util.List;
 @Tag(name = "식당")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/restaurants")
+@RequestMapping("/api/restaurants")
 public class RestaurantController {
 
     private final RestaurantService restaurantService;

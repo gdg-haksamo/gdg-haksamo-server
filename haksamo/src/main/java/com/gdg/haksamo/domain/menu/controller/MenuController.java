@@ -15,7 +15,7 @@ import java.time.LocalDate;
 @Tag(name = "메뉴")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/menus")
+@RequestMapping("/api/menus")
 public class MenuController {
 
     private final MenuService menuService;
