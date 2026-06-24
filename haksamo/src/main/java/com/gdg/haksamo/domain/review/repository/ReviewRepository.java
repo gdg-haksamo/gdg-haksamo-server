@@ -23,4 +23,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Double averageRatingForMenu(@Param("menu") Menu menu);
 
     long countByUserId(Long userId);
+
+    // 메뉴 삭제 시 연결 리뷰 정리 (도움됐어요 먼저 제거한 뒤 호출)
+    void deleteByMenu(Menu menu);
 }

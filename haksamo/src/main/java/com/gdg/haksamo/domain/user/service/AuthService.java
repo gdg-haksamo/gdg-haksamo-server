@@ -49,7 +49,6 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.password()))
                 .nickname(request.nickname())
                 .department(request.department())
-                .grade(request.grade())
                 .build());
         emailVerificationService.consume(request.email()); // 인증 내역 제거(재사용 방지)
         return new SignUpResponse(user.getId(), user.getEmail(), user.getNickname());

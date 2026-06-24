@@ -61,7 +61,6 @@ public class MyPageService {
         return new MyPageResponse(
                 user.getNickname(),
                 user.getDepartment(),
-                user.getGrade(),
                 reviewCount,
                 helpfulReceivedCount,
                 activeEventCount,
