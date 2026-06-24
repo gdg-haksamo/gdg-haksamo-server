@@ -55,7 +55,7 @@ public class AuthService {
                 .department(request.department())
                 .build());
         // 가입 2·3단계 선택 정보 저장. 같은 트랜잭션이라 유저·식당·키워드가 원자적으로 커밋된다.
-        favoriteRestaurantService.replaceFavorites(user, request.restaurantIds());
+        favoriteRestaurantService.setFavorite(user, request.restaurantId());
         preferenceService.replaceKeywords(user, request.keywords());
         emailVerificationService.consume(request.email()); // 인증 내역 제거(재사용 방지)
         return new SignUpResponse(user.getId(), user.getEmail(), user.getNickname());

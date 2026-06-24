@@ -43,13 +43,14 @@ public class MyPageService {
         long helpfulReceivedCount = reviewHelpfulRepository.countHelpfulReceivedByUserId(userId);
         long activeEventCount = eventRepository.countActiveEvents(LocalDate.now());
 
-        List<FavoriteRestaurantResponse> favoriteRestaurants = favoriteRestaurantRepository.findByUser(user)
+        FavoriteRestaurantResponse favoriteRestaurant = favoriteRestaurantRepository.findByUser(user)
                 .stream()
+                .findFirst()
                 .map(fr -> new FavoriteRestaurantResponse(
                         fr.getRestaurant().getRestaurantId(),
                         fr.getRestaurant().getName()
                 ))
-                .toList();
+                .orElse(null);
 
         List<String> preferenceKeywords = preferenceRepository.findByUser(user)
                 .stream()
@@ -64,7 +65,7 @@ public class MyPageService {
                 reviewCount,
                 helpfulReceivedCount,
                 activeEventCount,
-                favoriteRestaurants,
+                favoriteRestaurant,
                 preferenceKeywords,
                 toNotificationSettingsResponse(user)
         );
@@ -73,7 +74,7 @@ public class MyPageService {
     @Transactional
     public void updateFavoriteRestaurants(Long userId, FavoriteRestaurantsUpdateRequest request) {
         User user = getUser(userId);
-        favoriteRestaurantService.replaceFavorites(user, request.restaurantIds());
+        favoriteRestaurantService.setFavorite(user, request.restaurantId());
     }
 
     @Transactional
