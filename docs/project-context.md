@@ -17,13 +17,13 @@
 | Backend | Spring Boot 3.5.x, Java 17 |
 | DB | MySQL |
 | 인증 | Spring Security + JWT (JJWT 0.12.6) |
-| AI | Gemini 1.5 Flash (Vertex AI) |
+| AI | Gemini 3.1 Flash-Lite (Generative Language API) |
 | 알림 | FCM (Firebase Cloud Messaging) |
 | 배포 | AWS EC2 |
 | Frontend | React, TypeScript, Tailwind CSS, Vite |
 
 ## 핵심 도메인
-- **식당**: 공식당(학생), 공식당(교직원), 복지관, 정보센터, 카페테리아 첨성 (5곳)
+- **식당**: 정보센터, 복지관, 카페테리아 첨성, 글로벌플라자, 공식당(학생), 공식당(교직원) (6곳 — `RestaurantService` 시드 기준)
 - **사용자 인증**: 이메일 형식·중복·소유(인증번호) 검증 기반 자체 회원가입 (3단계, 도메인 제한 없음)
 - **메뉴 데이터**: 경북대 생협 사이트 크롤링 + 관리자 수동 수정/등록
   - 이미지·한줄설명·영양정보(탄단지·칼로리)는 크롤링이 아니라 **신규 메뉴 첫 크롤링 시 Gemini로 생성** (기존 메뉴는 스킵 → 비용 절감)

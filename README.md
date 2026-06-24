@@ -14,8 +14,8 @@
 | Framework | Spring Boot 3.5.x |
 | DB | MySQL 8.0 (docker-compose) |
 | Auth | Spring Security + JWT (JJWT 0.12.6) |
-| AI | Gemini 1.5 Flash (Vertex AI) — 예정 |
-| Push | FCM — 예정 |
+| AI | Gemini 3.1 Flash-Lite (Generative Language API) |
+| Push | FCM (Firebase Cloud Messaging) |
 
 ---
 

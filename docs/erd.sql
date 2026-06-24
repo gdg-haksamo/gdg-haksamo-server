@@ -30,7 +30,7 @@ CREATE TABLE `User` (
     `password`                       VARCHAR(255)   NOT NULL,
     `nickname`                       VARCHAR(255)   NOT NULL,
     `department`                     VARCHAR(255)   NULL,                             -- 학과 (회원가입 시 입력, 예: 컴퓨터학부)
-    `grade`                          INT            NULL,                             -- 학년 (예: 2 = 2학년)
+    -- grade(학년)는 회원가입 단계에서 제외됨 → User 엔티티에서 제거(설계 변경)
     -- 권한 3단계: USER(학생) / RESTAURANT_ADMIN(식당 운영자, 자기 식당만) / SUPER_ADMIN(운영팀, 전체)
     `role`                           ENUM('USER', 'RESTAURANT_ADMIN', 'SUPER_ADMIN') NOT NULL DEFAULT 'USER',
     -- RESTAURANT_ADMIN이 관리하는 식당. USER/SUPER_ADMIN은 NULL. (앱 레벨 FK, JPA는 Long 컬럼으로 보유)
@@ -122,7 +122,7 @@ CREATE TABLE `ReviewHelpful` (
 CREATE TABLE `Preference` (
     `preference_id` BIGINT         NOT NULL AUTO_INCREMENT,
     `user_id`       BIGINT         NOT NULL,
-    `keyword`       VARCHAR(255)   NOT NULL,
+    `keyword`       VARCHAR(255)   NOT NULL,                                          -- 고정 칩(PreferenceKeyword enum)의 name 저장. 자유 텍스트 아님, LIKED 전용
     PRIMARY KEY (`preference_id`),
     CONSTRAINT `fk_preference_user` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`)
 );
@@ -168,9 +168,11 @@ CREATE TABLE `Notification` (
 
 CREATE TABLE `Event` (
     `event_id`   BIGINT         NOT NULL AUTO_INCREMENT,
+    `type`       VARCHAR(50)    NOT NULL,                                            -- EventType enum(이벤트 분류)
     `title`      VARCHAR(255)   NOT NULL,
     `content`    TEXT           NULL,
     `image_url`  VARCHAR(255)   NULL,
+    `link_url`   VARCHAR(255)   NULL,                                                -- 외부 링크(상세/신청 등)
     `start_date` DATE           NULL,
     `end_date`   DATE           NULL,
     `created_at` DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
