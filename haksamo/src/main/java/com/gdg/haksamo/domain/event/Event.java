@@ -19,6 +19,10 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long eventId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EventType type;
+
     @Column(nullable = false)
     private String title;
 
@@ -26,6 +30,9 @@ public class Event {
     private String content;
 
     private String imageUrl;
+
+    // 인스타그램 등 외부 사이트 링크 (선택)
+    private String linkUrl;
 
     private LocalDate startDate;
 
@@ -35,19 +42,25 @@ public class Event {
     private LocalDateTime createdAt;
 
     @Builder
-    public Event(String title, String content, String imageUrl, LocalDate startDate, LocalDate endDate) {
+    public Event(EventType type, String title, String content, String imageUrl, String linkUrl,
+                 LocalDate startDate, LocalDate endDate) {
+        this.type = type;
         this.title = title;
         this.content = content;
         this.imageUrl = imageUrl;
+        this.linkUrl = linkUrl;
         this.startDate = startDate;
         this.endDate = endDate;
         this.createdAt = LocalDateTime.now();
     }
 
-    public void update(String title, String content, String imageUrl, LocalDate startDate, LocalDate endDate) {
+    public void update(EventType type, String title, String content, String imageUrl, String linkUrl,
+                        LocalDate startDate, LocalDate endDate) {
+        this.type = type;
         this.title = title;
         this.content = content;
         this.imageUrl = imageUrl;
+        this.linkUrl = linkUrl;
         this.startDate = startDate;
         this.endDate = endDate;
     }
