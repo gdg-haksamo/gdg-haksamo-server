@@ -25,9 +25,6 @@ dependencies {
 	// 이메일 인증번호 발송 (dev: 로그 출력 / prod: SMTP)
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	// API 문서 (Swagger UI / OpenAPI)
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
-
-	//swagger
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
 
 	// JWT

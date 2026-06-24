@@ -20,6 +20,9 @@
 --   - User.role: ENUM('USER','ADMIN') → ENUM('USER','RESTAURANT_ADMIN','SUPER_ADMIN')
 --   - User.managed_restaurant_id 추가 (RESTAURANT_ADMIN의 담당 식당 — 자기 식당만 관리)
 --   - 관리자 페이지: 식당 운영자(자기 식당만) + 운영팀(전체 메뉴/리뷰/계정) 분리 (erd-decisions #27)
+-- 작성: 김채윤 / 최종수정: 2026-06-24
+-- v1.6: 마이페이지 설계 확정 반영
+--   - Preference: 기피(DISLIKED) 제외, 선호 키워드만 저장 → type 컬럼 제거
 
 CREATE TABLE `User` (
     `user_id`                        BIGINT         NOT NULL AUTO_INCREMENT,
@@ -115,11 +118,11 @@ CREATE TABLE `ReviewHelpful` (
     CONSTRAINT `fk_rhelpful_user`   FOREIGN KEY (`user_id`)   REFERENCES `User` (`user_id`)
 );
 
+-- 선호 음식 키워드 (기피 키워드는 받지 않음)
 CREATE TABLE `Preference` (
     `preference_id` BIGINT         NOT NULL AUTO_INCREMENT,
     `user_id`       BIGINT         NOT NULL,
     `keyword`       VARCHAR(255)   NOT NULL,
-    `type`          ENUM('LIKED', 'DISLIKED') NOT NULL,  -- 선호/기피 구분
     PRIMARY KEY (`preference_id`),
     CONSTRAINT `fk_preference_user` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`)
 );
