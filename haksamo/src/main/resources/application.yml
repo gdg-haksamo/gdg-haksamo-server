@@ -23,6 +23,16 @@ gemini:
   model: ${GEMINI_MODEL:gemini-1.5-flash}
   base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
 
+# FCM 푸시 알림.
+#  - enabled=false(기본): 발송을 로그로만 남김 → 자격증명 없이도 앱이 정상 기동(부팅 실패 방지).
+#  - enabled=true: Firebase 서비스계정 JSON으로 실제 FCM 발송. credentials-json 필수.
+# (prod 전용 @Profile 대신 자격증명 유무로 분기 → 자격증명 누락 시 크래시 루프 방지)
+notification:
+  push:
+    firebase:
+      enabled: ${FCM_ENABLED:false}
+      credentials-json: ${FCM_CREDENTIALS_JSON:}
+
 app:
   # Refresh Token 쿠키 속성 (프로파일/환경별 override)
   #  - dev(같은 사이트, http localhost): Lax / secure=false
