@@ -23,7 +23,7 @@ public class RestaurantService {
         if (restaurantRepository.count() == 0) {
             restaurantRepository.save(Restaurant.builder().name("정보센터").build());
             restaurantRepository.save(Restaurant.builder().name("복지관").build());
-            restaurantRepository.save(Restaurant.builder().name("첨성").build());
+            restaurantRepository.save(Restaurant.builder().name("카페테리아 첨성").build());
             restaurantRepository.save(Restaurant.builder().name("글로벌플라자").build());
             restaurantRepository.save(Restaurant.builder().name("공식당 학생식당").build());
             restaurantRepository.save(Restaurant.builder().name("공식당 교직원식당").build());

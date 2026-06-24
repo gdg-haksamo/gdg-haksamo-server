@@ -58,7 +58,8 @@ public class MenuService {
                             schedule.getMenu().getRestaurant().getName(),
                             schedule.getMenu().getName(),
                             schedule.getMenu().getPrice(),
-                            averageRatingByMenuId.get(schedule.getMenu().getMenuId())
+                            averageRatingByMenuId.get(schedule.getMenu().getMenuId()),
+                            schedule.isSoldOut()
                     )
             );
         }
@@ -74,9 +75,9 @@ public class MenuService {
         Menu menu = menuRepository.findById(menuId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
-        String operatingTime = menuScheduleRepository.findFirstByMenu(menu)
-                .map(MenuSchedule::getOperatingTime)
-                .orElse(null);
+        MenuSchedule schedule = menuScheduleRepository.findFirstByMenu(menu).orElse(null);
+        String operatingTime = schedule != null ? schedule.getOperatingTime() : null;
+        boolean soldOut = schedule != null && schedule.isSoldOut();
 
         Double averageRating = roundRating(reviewRepository.averageRatingForMenu(menu));
         long reviewCount = reviewRepository.countByMenu(menu);
@@ -88,6 +89,7 @@ public class MenuService {
                 menu.getPrice(),
                 menu.getRestaurant().getName(),
                 operatingTime,
+                soldOut,
                 menu.getDescription(),
                 menu.getImageUrl(),
                 new NutritionResponse(

@@ -64,12 +64,12 @@ public class MenuCrawlerService {
             log.error("복지관 메뉴 크롤링 실패", e);
         }
         try {
-            //첨성
+            //카페테리아 첨성
             Document cheomDoc = Jsoup.connect("https://coop.knu.ac.kr/sub03/sub01_01.html?shop_sqno=37" + dateParam).get();
             List<ParsedMenu> cheomMenu = cheomseongParser.parse(cheomDoc);
-            menuScheduleSaveService.saveMenus(cheomMenu, "첨성");
+            menuScheduleSaveService.saveMenus(cheomMenu, "카페테리아 첨성");
         } catch (Exception e) {
-            log.error("첨성 메뉴 크롤링 실패", e);
+            log.error("카페테리아 첨성 메뉴 크롤링 실패", e);
         }
         try {
             //글플
