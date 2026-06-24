@@ -99,9 +99,14 @@ public class RestMenuInfoGenerator implements MenuInfoGenerator {
             if (!node.hasNonNull("id")) {
                 continue;
             }
+            // description이 비면 저장해도 NULL이라 매 크롤마다 재호출됨 → 유효한 항목만 반환
+            String description = node.path("description").asText(null);
+            if (description == null || description.isBlank()) {
+                continue;
+            }
             result.add(new GeneratedMenuInfo(
                     node.path("id").asLong(),
-                    node.path("description").asText(null),
+                    description,
                     intOrNull(node, "calories"),
                     intOrNull(node, "protein"),
                     intOrNull(node, "carb"),

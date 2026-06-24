@@ -114,7 +114,8 @@ public class MenuInfoEnrichmentService {
             int n = 0;
             for (Menu menu : menuRepository.findAllById(ids)) {
                 GeneratedMenuInfo info = byId.get(menu.getMenuId());
-                if (info == null) {
+                // 매칭 안 됐거나 설명이 비면 적용·집계하지 않음(저장해도 NULL이라 재호출 유발)
+                if (info == null || info.description() == null || info.description().isBlank()) {
                     continue;
                 }
                 menu.setDescription(info.description());
