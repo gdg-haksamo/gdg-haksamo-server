@@ -1,6 +1,7 @@
 package com.gdg.haksamo.domain.menu.controller;
 
 import com.gdg.haksamo.domain.menu.crawler.MenuCrawlerService;
+import com.gdg.haksamo.domain.menu.crawler.MenuInfoEnrichmentService;
 import com.gdg.haksamo.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,6 +26,17 @@ import java.time.LocalDate;
 public class MenuCrawlAdminController {
 
     private final MenuCrawlerService menuCrawlerService;
+    private final MenuInfoEnrichmentService menuInfoEnrichmentService;
+
+    @Operation(
+            summary = "신규 메뉴 정보(한줄설명·탄단지) 생성",
+            description = "설명·영양값이 비어있는 신규 메뉴만 골라 AI로 생성·저장합니다(이미 채워진 메뉴는 스킵). "
+                    + "크롤 시 자동 실행되지만, 수동으로도 트리거할 수 있습니다. 채운 메뉴 수를 반환합니다."
+    )
+    @PostMapping("/enrich-info")
+    public ApiResponse<Integer> enrichInfo() {
+        return ApiResponse.success(menuInfoEnrichmentService.enrichMissing());
+    }
 
     @Operation(
             summary = "메뉴 크롤 수동 실행",
