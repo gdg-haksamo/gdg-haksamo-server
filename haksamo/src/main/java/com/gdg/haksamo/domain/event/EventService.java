@@ -41,9 +41,11 @@ public class EventService {
         requireSuperAdmin(userId);
 
         Event event = Event.builder()
+                .type(request.getType())
                 .title(request.getTitle())
                 .content(request.getContent())
                 .imageUrl(request.getImageUrl())
+                .linkUrl(request.getLinkUrl())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .build();
@@ -57,8 +59,8 @@ public class EventService {
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_NOT_FOUND));
-        event.update(request.getTitle(), request.getContent(), request.getImageUrl(),
-                request.getStartDate(), request.getEndDate());
+        event.update(request.getType(), request.getTitle(), request.getContent(), request.getImageUrl(),
+                request.getLinkUrl(), request.getStartDate(), request.getEndDate());
         return EventDto.Response.from(event);
     }
 
