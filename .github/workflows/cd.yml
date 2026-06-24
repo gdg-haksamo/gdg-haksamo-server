@@ -13,6 +13,9 @@
 #   DB_USERNAME        - DB 접속 계정
 #   DB_PASSWORD        - DB 비밀번호
 #   JWT_SECRET         - JWT 서명 키 (32바이트 이상 랜덤 문자열)
+#   ADMIN_EMAIL        - 최초 SUPER_ADMIN(운영팀) 계정 이메일 (시더용, 1회 생성)
+#   ADMIN_PASSWORD     - 최초 SUPER_ADMIN 비밀번호 (DB엔 BCrypt 해시로 저장)
+#   ADMIN_NICKNAME     - (선택) SUPER_ADMIN 닉네임, 미설정 시 "관리자"
 
 name: CD - Deploy to EC2
 
@@ -112,6 +115,9 @@ jobs:
             DB_USERNAME=${{ secrets.DB_USERNAME }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
+            ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
+            ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+            ADMIN_NICKNAME=${{ secrets.ADMIN_NICKNAME }}
             ENVEOF
 
             # GHCR 로그인 (이미지 pull 권한)

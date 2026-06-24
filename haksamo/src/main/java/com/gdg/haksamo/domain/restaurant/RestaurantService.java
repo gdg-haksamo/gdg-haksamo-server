@@ -4,7 +4,8 @@ import com.gdg.haksamo.domain.menu.entity.Menu;
 import com.gdg.haksamo.domain.menu.repository.MenuRepository;
 import com.gdg.haksamo.domain.restaurant.dto.RestaurantMenuResponse;
 import com.gdg.haksamo.domain.restaurant.dto.RestaurantResponse;
-import com.gdg.haksamo.global.exception.NotFoundException;
+import com.gdg.haksamo.global.exception.BusinessException;
+import com.gdg.haksamo.global.exception.ErrorCode;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -41,7 +42,7 @@ public class RestaurantService {
 
     public List<RestaurantMenuResponse> getMenus(Long restaurantId) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new NotFoundException("식당을 찾을 수 없습니다: " + restaurantId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         return menuRepository.findByRestaurant(restaurant)
                 .stream()

@@ -1,40 +1,90 @@
 package com.gdg.haksamo.global.exception;
 
-import org.springframework.http.HttpStatus;
+import com.gdg.haksamo.global.response.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.util.Map;
-
+/**
+ * 컨트롤러 계층에서 발생하는 예외를 공통 {@link ApiResponse} 형식으로 변환한다.
+ * (시큐리티 필터 단계의 인증 실패는 SecurityConfig의 EntryPoint/AccessDeniedHandler가 처리)
+ */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
+        ErrorCode errorCode = e.getErrorCode();
+        log.warn("BusinessException: {} - {}", errorCode.getCode(), errorCode.getMessage());
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ApiResponse.error(errorCode.getCode(), errorCode.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException e) {
-        String message = e.getBindingResult().getFieldErrors().stream()
-                .findFirst()
-                .map(error -> error.getField() + " " + error.getDefaultMessage())
-                .orElse("요청 값이 올바르지 않습니다.");
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", message));
+    public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException e) {
+        FieldError fieldError = e.getBindingResult().getFieldError();
+        String message = fieldError != null ? fieldError.getDefaultMessage()
+                : ErrorCode.INVALID_INPUT_VALUE.getMessage();
+        return ResponseEntity.status(ErrorCode.INVALID_INPUT_VALUE.getStatus())
+                .body(ApiResponse.error(ErrorCode.INVALID_INPUT_VALUE.getCode(), message));
     }
 
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleNotFound(NotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", messageOf(e)));
+    /**
+     * 잘못된 클라이언트 입력(깨진 JSON, 타입 불일치 enum/path 변수, 필수 파라미터 누락 등)은
+     * 서버 오류가 아니라 400으로 분류한다. (아래 일반 Exception 핸들러에 걸려 500이 되는 것 방지)
+     */
+    @ExceptionHandler({
+            HttpMessageNotReadableException.class,
+            MethodArgumentTypeMismatchException.class,
+            MissingServletRequestParameterException.class
+    })
+    public ResponseEntity<ApiResponse<Void>> handleBadRequest(Exception e) {
+        log.warn("Bad request: {}", e.getMessage());
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ApiResponse.error(errorCode.getCode(), errorCode.getMessage()));
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", messageOf(e)));
+    /**
+     * 동시 요청 등으로 DB 제약(유니크 등)이 깨진 경우 500이 아닌 409로 변환한다.
+     * (예: 회원가입/관리자 계정 발급이 거의 동시에 들어와 이메일 유니크 충돌)
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(DataIntegrityViolationException e) {
+        log.warn("DataIntegrityViolation: {}", e.getMostSpecificCause().getMessage());
+        ErrorCode errorCode = ErrorCode.DATA_CONFLICT;
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ApiResponse.error(errorCode.getCode(), errorCode.getMessage()));
     }
 
-    private String messageOf(Exception e) {
-        return e.getMessage() != null ? e.getMessage() : "요청을 처리할 수 없습니다.";
+    /**
+     * 메서드 보안(@PreAuthorize 등)으로 권한이 거부된 경우 403으로 변환.
+     * (경로 기반 인가는 ExceptionTranslationFilter→JwtAccessDeniedHandler가 처리하지만,
+     *  컨트롤러 메서드 단계에서 던져진 거부 예외는 DispatcherServlet이 먼저 잡으므로 여기서 처리해야
+     *  아래 일반 Exception 핸들러에 걸려 500이 나가는 것을 막는다.)
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException e) {
+        ErrorCode errorCode = ErrorCode.ACCESS_DENIED;
+        log.warn("AccessDenied: {}", e.getMessage());
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ApiResponse.error(errorCode.getCode(), errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+        log.error("Unhandled exception", e);
+        ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ApiResponse.error(errorCode.getCode(), errorCode.getMessage()));
     }
 }

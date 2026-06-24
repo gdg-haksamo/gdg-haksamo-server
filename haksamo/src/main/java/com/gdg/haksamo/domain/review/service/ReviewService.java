@@ -9,7 +9,8 @@ import com.gdg.haksamo.domain.review.entity.Review;
 import com.gdg.haksamo.domain.review.entity.ReviewHelpful;
 import com.gdg.haksamo.domain.review.repository.ReviewHelpfulRepository;
 import com.gdg.haksamo.domain.review.repository.ReviewRepository;
-import com.gdg.haksamo.global.exception.NotFoundException;
+import com.gdg.haksamo.global.exception.BusinessException;
+import com.gdg.haksamo.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +29,7 @@ public class ReviewService {
     @Transactional
     public ReviewResponse createReview(Long menuId, ReviewRequest request) {
         Menu menu = menuRepository.findById(menuId)
-                .orElseThrow(() -> new NotFoundException("메뉴를 찾을 수 없습니다: " + menuId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
         Review review = reviewRepository.save(
                 Review.builder()
@@ -44,7 +45,7 @@ public class ReviewService {
 
     public List<ReviewResponse> getReviews(Long menuId) {
         Menu menu = menuRepository.findById(menuId)
-                .orElseThrow(() -> new NotFoundException("메뉴를 찾을 수 없습니다: " + menuId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
         return reviewRepository.findByMenu(menu)
                 .stream()
@@ -54,7 +55,7 @@ public class ReviewService {
 
     public RatingDistributionResponse getRatingDistribution(Long menuId) {
         Menu menu = menuRepository.findById(menuId)
-                .orElseThrow(() -> new NotFoundException("메뉴를 찾을 수 없습니다: " + menuId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
         Map<Integer, Long> distribution = new HashMap<>();
         for (int rating = 1; rating <= 5; rating++) {
@@ -75,7 +76,7 @@ public class ReviewService {
     @Transactional
     public void toggleHelpful(Long reviewId, Long userId) {
         if (!reviewRepository.existsById(reviewId)) {
-            throw new NotFoundException("리뷰를 찾을 수 없습니다: " + reviewId);
+            throw new BusinessException(ErrorCode.REVIEW_NOT_FOUND);
         }
 
         reviewHelpfulRepository.findByReview_ReviewIdAndUserId(reviewId, userId)

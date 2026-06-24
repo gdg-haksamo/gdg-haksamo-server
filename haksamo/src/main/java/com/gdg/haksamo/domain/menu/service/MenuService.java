@@ -14,7 +14,8 @@ import com.gdg.haksamo.domain.menu.repository.MenuScheduleRepository;
 import com.gdg.haksamo.domain.review.entity.Review;
 import com.gdg.haksamo.domain.review.repository.ReviewHelpfulRepository;
 import com.gdg.haksamo.domain.review.repository.ReviewRepository;
-import com.gdg.haksamo.global.exception.NotFoundException;
+import com.gdg.haksamo.global.exception.BusinessException;
+import com.gdg.haksamo.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -71,7 +72,7 @@ public class MenuService {
 
     public MenuDetailResponse getMenuDetail(Long menuId) {
         Menu menu = menuRepository.findById(menuId)
-                .orElseThrow(() -> new NotFoundException("메뉴를 찾을 수 없습니다: " + menuId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
         String operatingTime = menuScheduleRepository.findFirstByMenu(menu)
                 .map(MenuSchedule::getOperatingTime)

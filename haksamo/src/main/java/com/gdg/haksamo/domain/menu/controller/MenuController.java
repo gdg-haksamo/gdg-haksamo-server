@@ -3,6 +3,7 @@ package com.gdg.haksamo.domain.menu.controller;
 import com.gdg.haksamo.domain.menu.dto.MenuDetailResponse;
 import com.gdg.haksamo.domain.menu.dto.MenusByMealTimeResponse;
 import com.gdg.haksamo.domain.menu.service.MenuService;
+import com.gdg.haksamo.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,14 +25,14 @@ public class MenuController {
             description = "선택한 날짜의 학식 메뉴를 아침/점심/저녁으로 묶어서 조회합니다."
     )
     @GetMapping
-    public MenusByMealTimeResponse getMenus(
+    public ApiResponse<MenusByMealTimeResponse> getMenus(
             @Parameter(
                     description = "조회 날짜 (yyyy-MM-dd)",
                     example = "2026-06-23"
             )
             @RequestParam LocalDate date
     ) {
-        return menuService.getMenus(date);
+        return ApiResponse.success(menuService.getMenus(date));
     }
 
     @Operation(
@@ -39,7 +40,7 @@ public class MenuController {
             description = "메뉴 상세 정보(가격, 운영시간, 영양정보, 평균 별점, 최근 리뷰 3개 등)를 조회합니다."
     )
     @GetMapping("/{menuId}")
-    public MenuDetailResponse getMenuDetail(@PathVariable Long menuId) {
-        return menuService.getMenuDetail(menuId);
+    public ApiResponse<MenuDetailResponse> getMenuDetail(@PathVariable Long menuId) {
+        return ApiResponse.success(menuService.getMenuDetail(menuId));
     }
 }
