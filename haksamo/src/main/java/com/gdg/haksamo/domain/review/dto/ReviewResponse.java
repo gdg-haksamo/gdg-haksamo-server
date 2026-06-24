@@ -13,6 +13,12 @@ public record ReviewResponse(
         @Schema(description = "작성자 ID")
         Long userId,
 
+        @Schema(description = "식당명", example = "정보센터")
+        String restaurant,
+
+        @Schema(description = "메뉴명", example = "제육볶음")
+        String menuName,
+
         @Schema(description = "별점 (1~5)")
         Integer rating,
 

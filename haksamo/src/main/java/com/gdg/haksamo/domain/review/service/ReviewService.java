@@ -113,6 +113,8 @@ public class ReviewService {
         return new ReviewResponse(
                 review.getReviewId(),
                 review.getUserId(),
+                review.getMenu().getRestaurant().getName(),
+                review.getMenu().getName(),
                 review.getRating(),
                 review.getContent(),
                 review.getCreatedAt(),
