@@ -23,7 +23,11 @@ public class Menu {
     private Integer price;
 
     private String category;
+
+    // S3/CDN URL은 한글 키 인코딩 등으로 255자를 넘을 수 있어 여유 있게 잡는다. (관리자 이미지 주입 API)
+    @Column(length = 512)
     private String imageUrl;
+
     private String description;
     private Integer calories;
     private Integer protein;

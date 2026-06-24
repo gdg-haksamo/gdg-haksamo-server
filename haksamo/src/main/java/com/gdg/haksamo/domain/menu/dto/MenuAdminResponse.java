@@ -22,7 +22,10 @@ public record MenuAdminResponse(
         Integer price,
 
         @Schema(description = "분류", example = "백반")
-        String category
+        String category,
+
+        @Schema(description = "메뉴 이미지 URL(관리자 주입, 없으면 null)", example = "https://.../jeyuk.jpg")
+        String imageUrl
 ) {
     public static MenuAdminResponse from(Menu menu) {
         return new MenuAdminResponse(
@@ -30,7 +33,8 @@ public record MenuAdminResponse(
                 menu.getRestaurant().getRestaurantId(),
                 menu.getName(),
                 menu.getPrice(),
-                menu.getCategory()
+                menu.getCategory(),
+                menu.getImageUrl()
         );
     }
 }
