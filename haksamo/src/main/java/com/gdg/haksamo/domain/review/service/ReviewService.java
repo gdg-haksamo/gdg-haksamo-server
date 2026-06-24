@@ -47,7 +47,7 @@ public class ReviewService {
                         .build()
         );
 
-        return toResponse(review, nicknamesOf(List.of(review)));
+        return toResponse(review, nicknamesOf(List.of(review)), helpfulCountsOf(List.of(review)));
     }
 
     public List<ReviewResponse> getReviews(Long menuId) {
@@ -83,16 +83,21 @@ public class ReviewService {
 
     @Transactional
     public void toggleHelpful(Long reviewId, Long userId) {
-        if (!reviewRepository.existsById(reviewId)) {
-            throw new BusinessException(ErrorCode.REVIEW_NOT_FOUND);
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+        // 본인 리뷰에는 '도움됐어요'를 누를 수 없다(자기 리뷰 추천으로 통계 부풀리기 방지).
+        if (review.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.REVIEW_HELPFUL_SELF_NOT_ALLOWED);
         }
 
+        // 동시 토글로 인한 중복 insert는 UNIQUE(review_id, user_id) + 전역 핸들러(C003)로 방어한다.
         reviewHelpfulRepository.findByReview_ReviewIdAndUserId(reviewId, userId)
                 .ifPresentOrElse(
                         reviewHelpfulRepository::delete,
                         () -> reviewHelpfulRepository.save(
                                 ReviewHelpful.builder()
-                                        .review(reviewRepository.getReferenceById(reviewId))
+                                        .review(review)
                                         .userId(userId)
                                         .build()
                         )
@@ -116,8 +121,9 @@ public class ReviewService {
 
     private List<ReviewResponse> toResponses(List<Review> reviews) {
         Map<Long, String> nicknames = nicknamesOf(reviews);
+        Map<Long, Long> helpfulCounts = helpfulCountsOf(reviews);
         return reviews.stream()
-                .map(review -> toResponse(review, nicknames))
+                .map(review -> toResponse(review, nicknames, helpfulCounts))
                 .toList();
     }
 
@@ -130,8 +136,21 @@ public class ReviewService {
         return nicknames;
     }
 
-    private ReviewResponse toResponse(Review review, Map<Long, String> nicknames) {
-        long helpfulCount = reviewHelpfulRepository.countByReview_ReviewId(review.getReviewId());
+    /** 리뷰 reviewId → 도움됐어요 수 맵 (배치 집계로 N+1 회피). */
+    private Map<Long, Long> helpfulCountsOf(List<Review> reviews) {
+        List<Long> reviewIds = reviews.stream().map(Review::getReviewId).toList();
+        Map<Long, Long> counts = new HashMap<>();
+        if (reviewIds.isEmpty()) {
+            return counts;
+        }
+        for (Object[] row : reviewHelpfulRepository.countByReviewIds(reviewIds)) {
+            counts.put((Long) row[0], (Long) row[1]);
+        }
+        return counts;
+    }
+
+    private ReviewResponse toResponse(Review review, Map<Long, String> nicknames, Map<Long, Long> helpfulCounts) {
+        long helpfulCount = helpfulCounts.getOrDefault(review.getReviewId(), 0L);
 
         return new ReviewResponse(
                 review.getReviewId(),
