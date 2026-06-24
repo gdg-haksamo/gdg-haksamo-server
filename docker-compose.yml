@@ -43,6 +43,15 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      # 이메일 인증번호 SMTP — 비우면 prod 부팅 실패(SmtpMailSender가 JavaMailSender 요구)
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      # 최초 SUPER_ADMIN 시더 — .env엔 있었지만 컨테이너로 전달되지 않아 시딩이 스킵되던 값
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_NICKNAME: ${ADMIN_NICKNAME:-관리자}
     ports:
       - "8080:8080"
 
