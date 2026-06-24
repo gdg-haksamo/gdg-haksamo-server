@@ -52,4 +52,14 @@ public class ReviewController {
         reviewService.toggleHelpful(reviewId, userId);
         return ApiResponse.success();
     }
+
+    @Operation(summary = "관리자 리뷰 삭제", description = "관리자(식당 운영자/운영팀)가 리뷰를 삭제합니다. 도움됐어요 기록도 함께 삭제됩니다.")
+    @DeleteMapping("/admin/reviews/{reviewId}")
+    public ApiResponse<Void> deleteReview(
+            @PathVariable Long reviewId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        reviewService.deleteReview(userId, reviewId);
+        return ApiResponse.success();
+    }
 }
