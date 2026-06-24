@@ -55,6 +55,13 @@ public class ReviewService {
                 .toList();
     }
 
+    public List<ReviewResponse> getAllReviews() {
+        return reviewRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     public RatingDistributionResponse getRatingDistribution(Long menuId) {
         Menu menu = menuRepository.findById(menuId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));

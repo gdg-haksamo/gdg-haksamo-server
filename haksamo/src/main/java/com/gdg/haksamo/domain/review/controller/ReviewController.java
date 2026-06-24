@@ -37,6 +37,12 @@ public class ReviewController {
         return ApiResponse.success(reviewService.getReviews(menuId));
     }
 
+    @Operation(summary = "전체 리뷰 목록 조회", description = "메뉴 구분 없이 전체 리뷰를 최신순으로 조회합니다.")
+    @GetMapping("/api/reviews")
+    public ApiResponse<List<ReviewResponse>> getAllReviews() {
+        return ApiResponse.success(reviewService.getAllReviews());
+    }
+
     @Operation(summary = "메뉴 별점 분포 조회", description = "메뉴의 1~5점 별점 분포를 조회합니다.")
     @GetMapping("/api/menus/{menuId}/rating-distribution")
     public ApiResponse<RatingDistributionResponse> getRatingDistribution(@PathVariable Long menuId) {
