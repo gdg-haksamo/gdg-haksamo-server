@@ -14,30 +14,43 @@ import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
 import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 /**
  * prod용 실제 Gemini 호출 (Generative Language REST API, API 키 방식).
  * {@code GEMINI_API_KEY}만 env로 주입하면 동작한다(GCP 서비스계정·SDK 불필요).
  *
- * <p>응답은 JSON 모드로 강제하고, 후보 index와 한 줄 이유만 받아 메뉴를 매칭한다.
- * 호출/파싱 실패는 {@link ErrorCode#RECOMMENDATION_UNAVAILABLE}(503)로 올린다.
+ * <p>응답은 JSON 모드로 강제하고, 후보 index만 받아 메뉴를 매칭한다.
+ * 호출은 분당 한도 이하로 페이싱(스로틀)하고, 429(한도초과)는 30초 간격으로 2회 재시도한 뒤,
+ * 그래도 실패하거나 그 외 오류면 결정론적 폴백({@link DeterministicPicker})으로 대체해 추천이 끊기지 않게 한다.
  */
 @Slf4j
 @Component
 @Profile("prod")
 public class RestGeminiClient implements GeminiClient {
 
+    /** 429(한도초과)에만 적용하는 재시도 횟수·간격. 그 외 오류는 즉시 폴백. */
+    private static final int MAX_RETRIES_ON_429 = 2;
+    private static final Duration RETRY_BACKOFF = Duration.ofSeconds(30);
+
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
     private final String apiKey;
     private final String model;
 
+    // 호출 간 최소 간격(= 60s / maxRpm). 여러 스레드가 호출해도 이 간격으로 페이싱해 429를 원천 차단한다.
+    private final long minCallIntervalMillis;
+    private final Object rateLock = new Object();
+    private long nextCallAllowedAtMillis = 0L;
+
     public RestGeminiClient(
             ObjectMapper objectMapper,
             @Value("${gemini.base-url}") String baseUrl,
             @Value("${gemini.api-key}") String apiKey,
-            @Value("${gemini.model}") String model) {
+            @Value("${gemini.model}") String model,
+            @Value("${gemini.max-rpm:13}") int maxRpm) {
+        this.minCallIntervalMillis = 60_000L / Math.max(1, maxRpm);
         // Gemini 응답 지연이 요청 스레드를 오래 묶지 않도록 connect/read 타임아웃을 명시한다.
         ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.defaults()
                 .withConnectTimeout(Duration.ofSeconds(3))
@@ -53,31 +66,81 @@ public class RestGeminiClient implements GeminiClient {
 
     @Override
     public List<GeminiPick> recommend(GeminiRecommendationRequest request) {
+        for (int attempt = 0; ; attempt++) {
+            try {
+                throttle(); // 분당 한도 이하로 페이싱 — 스케줄러가 한꺼번에 N콜 쏴도 간격을 벌린다
+                List<GeminiPick> picks = parse(callGemini(request));
+                if (picks.isEmpty()) {
+                    log.warn("Gemini 응답 picks 비어있음 — 결정론적 폴백으로 대체");
+                    return DeterministicPicker.pick(request);
+                }
+                return picks;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("Gemini 호출 대기 중 인터럽트 — 결정론적 폴백으로 대체");
+                return DeterministicPicker.pick(request);
+            } catch (Exception e) {
+                // 429(한도초과)만 30초 간격으로 재시도, 그 외(네트워크·파싱)는 즉시 폴백(불필요한 대기 방지).
+                if (isRateLimited(e) && attempt < MAX_RETRIES_ON_429) {
+                    log.warn("Gemini 429(한도초과) — {}초 후 재시도 ({}/{})",
+                            RETRY_BACKOFF.toSeconds(), attempt + 1, MAX_RETRIES_ON_429);
+                    if (!sleep(RETRY_BACKOFF)) {
+                        return DeterministicPicker.pick(request); // 대기 중 인터럽트 → 폴백
+                    }
+                    continue;
+                }
+                log.warn("Gemini 추천 호출 실패 — 결정론적 폴백으로 대체: {}", e.toString());
+                return DeterministicPicker.pick(request);
+            }
+        }
+    }
+
+    /** 실제 Gemini 호출. 비-2xx(예: 429)는 RestClient가 예외로 던진다. */
+    private String callGemini(GeminiRecommendationRequest request) {
         String prompt = buildPrompt(request);
         Map<String, Object> body = Map.of(
                 "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))),
                 "generationConfig", Map.of(
                         "responseMimeType", "application/json",
                         "temperature", 0.9));
-        try {
-            String raw = restClient.post()
-                    // API 키는 query string(로그·프록시에 노출 위험) 대신 헤더로 전달한다.
-                    .uri("/models/{model}:generateContent", model)
-                    .header("x-goog-api-key", apiKey)
-                    .body(body)
-                    .retrieve()
-                    .body(String.class);
-            List<GeminiPick> picks = parse(raw);
-            if (picks.isEmpty()) {
-                log.warn("Gemini 응답 picks 비어있음 — 결정론적 폴백으로 대체");
-                return DeterministicPicker.pick(request);
-            }
-            return picks;
-        } catch (Exception e) {
-            // 한도초과(429)·네트워크·파싱 오류 등 → 추천이 끊기지 않게 결정론적 추천으로 폴백(시연 안전).
-            log.warn("Gemini 추천 호출 실패 — 결정론적 폴백으로 대체: {}", e.toString());
-            return DeterministicPicker.pick(request);
+        return restClient.post()
+                // API 키는 query string(로그·프록시에 노출 위험) 대신 헤더로 전달한다.
+                .uri("/models/{model}:generateContent", model)
+                .header("x-goog-api-key", apiKey)
+                .body(body)
+                .retrieve()
+                .body(String.class);
+    }
+
+    /** 분당 한도 이하로 호출을 페이싱한다(여러 스레드가 호출해도 전역 간격을 유지). */
+    private void throttle() throws InterruptedException {
+        long waitMillis;
+        synchronized (rateLock) {
+            long now = System.currentTimeMillis();
+            long slot = Math.max(now, nextCallAllowedAtMillis);
+            nextCallAllowedAtMillis = slot + minCallIntervalMillis;
+            waitMillis = slot - now;
         }
+        if (waitMillis > 0) {
+            Thread.sleep(waitMillis);
+        }
+    }
+
+    /** 백오프 대기. 인터럽트되면 플래그를 복원하고 false. */
+    private boolean sleep(Duration duration) {
+        try {
+            Thread.sleep(duration.toMillis());
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
+    /** HTTP 429(Too Many Requests) 여부. */
+    private boolean isRateLimited(Exception e) {
+        return e instanceof HttpClientErrorException hce
+                && hce.getStatusCode().value() == 429;
     }
 
     private String buildPrompt(GeminiRecommendationRequest request) {
