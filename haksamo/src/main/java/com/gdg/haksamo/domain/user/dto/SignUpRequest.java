@@ -30,7 +30,8 @@ public record SignUpRequest(
 
         String department,
 
-        // 가입 3단계 선호 키워드(선택). 미입력 시 null/빈 목록 허용.
+        // 가입 3단계 선호 키워드(선택). 미입력 시 null/빈 목록 허용. 중복은 저장 시 정리됨.
+        @Size(max = PreferenceKeyword.MAX_SELECTION, message = "선호 키워드는 최대 {max}개까지 선택할 수 있습니다.")
         List<PreferenceKeyword> keywords
 ) {
 }

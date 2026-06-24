@@ -19,6 +19,7 @@ public class PreferenceService {
     /**
      * 사용자의 선호 키워드를 주어진 목록으로 전체 교체한다.
      * keywords가 null이거나 비어 있으면 기존 키워드를 모두 제거하고 끝낸다.
+     * (user, keyword) 유니크 제약이 없으므로 중복 입력은 distinct로 정리해 행 중복을 막는다.
      */
     @Transactional
     public void replaceKeywords(User user, List<PreferenceKeyword> keywords) {
@@ -26,13 +27,13 @@ public class PreferenceService {
         if (keywords == null || keywords.isEmpty()) {
             return;
         }
-        for (PreferenceKeyword keyword : keywords) {
-            preferenceRepository.save(
-                    Preference.builder()
-                            .user(user)
-                            .keyword(keyword)
-                            .build()
-            );
-        }
+        List<Preference> preferences = keywords.stream()
+                .distinct()
+                .map(keyword -> Preference.builder()
+                        .user(user)
+                        .keyword(keyword)
+                        .build())
+                .toList();
+        preferenceRepository.saveAll(preferences);
     }
 }
