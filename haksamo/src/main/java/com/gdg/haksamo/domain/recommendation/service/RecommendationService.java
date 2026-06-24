@@ -17,6 +17,7 @@ import com.gdg.haksamo.domain.recommendation.gemini.GeminiRecommendationRequest;
 import com.gdg.haksamo.domain.recommendation.repository.RecommendationRepository;
 import com.gdg.haksamo.domain.restaurant.FavoriteRestaurant;
 import com.gdg.haksamo.domain.restaurant.FavoriteRestaurantRepository;
+import com.gdg.haksamo.domain.restaurant.Restaurant;
 import com.gdg.haksamo.domain.user.entity.User;
 import com.gdg.haksamo.domain.user.repository.UserRepository;
 import com.gdg.haksamo.global.exception.BusinessException;
@@ -117,11 +118,15 @@ public class RecommendationService {
     public GeminiRecommendationRequest prepareUserRequest(Long userId, LocalDate date, MealTime meal) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        List<Menu> candidates = mealCandidates(date, meal);
+        Restaurant favorite = favoriteRestaurant(user);
+        // 선호 식당이 지정돼 있으면 후보를 그 식당 메뉴로만 한정한다(추천 4개가 모두 같은 식당).
+        List<Menu> candidates = restrictToFavorite(mealCandidates(date, meal), favorite);
         if (candidates.isEmpty()) {
+            // 선호 식당이 해당 끼니에 편성이 없으면 여기서 끊긴다("그 식당만" 요구사항에 따른 의도).
             throw new BusinessException(ErrorCode.NO_MENU_TO_RECOMMEND);
         }
-        return buildRequest(meal, candidates, likedKeywords(user), favoriteRestaurantNames(user));
+        List<String> favoriteNames = (favorite != null) ? List.of(favorite.getName()) : List.of();
+        return buildRequest(meal, candidates, likedKeywords(user), favoriteNames);
     }
 
     /**
@@ -272,12 +277,25 @@ public class RecommendationService {
                 .toList();
     }
 
-    /** 사용자 선호 식당명. */
-    private List<String> favoriteRestaurantNames(User user) {
-        return favoriteRestaurantRepository.findByUser(user).stream()
+    /** 사용자의 선호 식당(단일). 없으면 null. 레거시 다중행 대비 id 오름차순 첫 행으로 결정론적 선택. */
+    private Restaurant favoriteRestaurant(User user) {
+        return favoriteRestaurantRepository.findFirstByUserOrderByIdAsc(user)
                 .map(FavoriteRestaurant::getRestaurant)
-                .filter(restaurant -> restaurant != null)
-                .map(restaurant -> restaurant.getName())
+                .orElse(null);
+    }
+
+    /**
+     * 선호 식당이 지정돼 있으면 후보를 그 식당 메뉴로만 한정한다.
+     * 미지정이면 전체 후보 그대로 반환. 폴백 없음 — 선호 식당이 해당 끼니에 없으면 빈 목록이 되고,
+     * 호출부에서 NO_MENU_TO_RECOMMEND로 끊는다("그 식당만" 요구사항).
+     */
+    private List<Menu> restrictToFavorite(List<Menu> candidates, Restaurant favorite) {
+        if (favorite == null) {
+            return candidates;
+        }
+        return candidates.stream()
+                .filter(menu -> menu.getRestaurant() != null
+                        && favorite.getRestaurantId().equals(menu.getRestaurant().getRestaurantId()))
                 .toList();
     }
 

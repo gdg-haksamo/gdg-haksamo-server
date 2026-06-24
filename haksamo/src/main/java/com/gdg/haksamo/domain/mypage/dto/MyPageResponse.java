@@ -29,8 +29,8 @@ public record MyPageResponse(
         @Schema(description = "진행 중인 이벤트 수 (오늘이 시작일~종료일 사이인 이벤트 개수)", example = "2")
         Long activeEventCount,
 
-        @Schema(description = "자주 가는 식당 목록")
-        List<FavoriteRestaurantResponse> favoriteRestaurants,
+        @Schema(description = "자주 가는 식당 (단일, 없으면 null)")
+        FavoriteRestaurantResponse favoriteRestaurant,
 
         @Schema(description = "선호 키워드 목록", example = "[\"매운음식\",\"한식\"]")
         List<String> preferenceKeywords,
