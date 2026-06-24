@@ -24,6 +24,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	// 이메일 인증번호 발송 (dev: 로그 출력 / prod: SMTP)
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	// FCM 푸시 알림 (자격증명 있으면 실제 발송, 없으면 로그 — notification.push.firebase.enabled로 분기)
+	implementation 'com.google.firebase:firebase-admin:9.4.3'
 	// API 문서 (Swagger UI / OpenAPI)
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
 
