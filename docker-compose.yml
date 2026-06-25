@@ -60,5 +60,27 @@ services:
     ports:
       - "8080:8080"
 
+  # HTTPS 리버스 프록시 (Caddy) — EC2 배포용
+  # - app:8080 으로 프록시. Let's Encrypt 인증서를 자동 발급·갱신한다(Caddyfile 없이 reverse-proxy 명령으로).
+  # - CADDY_DOMAIN(.env)으로 발급 도메인 지정 → DuckDNS 서브도메인이 EC2 IP를 가리켜야 함.
+  # - 80: HTTP-01 인증·HTTPS 리다이렉트 / 443: HTTPS  → EC2 보안그룹에서 둘 다 열어야 한다.
+  # - caddy-data 볼륨에 인증서 영속 → 재배포(down/up) 시 재발급 안 함(Let's Encrypt 레이트리밋 회피).
+  caddy:
+    profiles: [prod]
+    image: caddy:2-alpine
+    container_name: haksamo-caddy
+    restart: unless-stopped
+    depends_on:
+      - app
+    command: caddy reverse-proxy --from ${CADDY_DOMAIN} --to app:8080
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+
 volumes:
   haksamo-mysql-data:
+  caddy-data:
+  caddy-config:
